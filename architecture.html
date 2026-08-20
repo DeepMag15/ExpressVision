@@ -1,0 +1,1399 @@
+<title>ExpressVision Architecture</title>
+<style>
+:root{
+  --ground:#EDF0EC;
+  --surface:#F8FAF7;
+  --surface-2:#E2E7E0;
+  --ink:#101715;
+  --ink-2:#39453F;
+  --muted:#6B7772;
+  --line:#CCD4CA;
+  --line-strong:#A6B2A5;
+  --accent:#A9640F;
+  --accent-2:#8A5109;
+  --accent-soft:#F2E2C5;
+  --critical:#A2382A;
+  --critical-soft:#F4DAD5;
+  --ok:#2B6656;
+  --ok-soft:#D6E7E0;
+  --info:#3A5D71;
+  --info-soft:#D9E4EA;
+  --shadow:0 1px 2px rgba(16,23,21,.06),0 6px 18px -10px rgba(16,23,21,.22);
+
+  --font-display:"Segoe UI Variable Display","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  --font-body:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --font-mono:"Cascadia Mono",Consolas,"SFMono-Regular","Liberation Mono",Menlo,monospace;
+
+  --measure:70ch;
+  --rail:236px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1211;
+    --surface:#131A18;
+    --surface-2:#1A2220;
+    --ink:#E1E7E2;
+    --ink-2:#B2BDB7;
+    --muted:#7D8A84;
+    --line:#26302D;
+    --line-strong:#3B4642;
+    --accent:#E3A34A;
+    --accent-2:#F0BA72;
+    --accent-soft:#33280F;
+    --critical:#DB7461;
+    --critical-soft:#38201B;
+    --ok:#5FA994;
+    --ok-soft:#152C27;
+    --info:#84A9C1;
+    --info-soft:#16262E;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1211;
+  --surface:#131A18;
+  --surface-2:#1A2220;
+  --ink:#E1E7E2;
+  --ink-2:#B2BDB7;
+  --muted:#7D8A84;
+  --line:#26302D;
+  --line-strong:#3B4642;
+  --accent:#E3A34A;
+  --accent-2:#F0BA72;
+  --accent-soft:#33280F;
+  --critical:#DB7461;
+  --critical-soft:#38201B;
+  --ok:#5FA994;
+  --ok-soft:#152C27;
+  --info:#84A9C1;
+  --info-soft:#16262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:17px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);gap:0;max-width:1320px;margin:0 auto}
+.rail{
+  position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:34px 22px 40px 26px;border-right:1px solid var(--line);
+}
+.rail-mark{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.25;margin-bottom:2px}
+.rail-sub{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:26px}
+.rail nav{display:flex;flex-direction:column;gap:1px}
+.rail nav a{
+  font-family:var(--font-display);font-size:13px;line-height:1.35;color:var(--ink-2);
+  text-decoration:none;padding:5px 9px;border-radius:3px;border-left:2px solid transparent;
+  display:flex;gap:9px;
+}
+.rail nav a span{font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:15px}
+.rail nav a:hover{background:var(--surface-2);color:var(--ink)}
+.rail nav a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft)}
+.rail nav a.on span{color:var(--accent)}
+.rail nav a:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.main{padding:0 0 120px;min-width:0}
+.wrap{max-width:var(--measure);padding:0 44px;margin:0}
+.bleed{max-width:none;padding:0 44px;margin:0}
+
+/* ---------- masthead ---------- */
+.mast{padding:64px 44px 30px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 18px}
+h1{
+  font-family:var(--font-display);font-weight:700;font-size:clamp(30px,4.1vw,46px);
+  line-height:1.06;letter-spacing:-.028em;margin:0 0 18px;text-wrap:balance;max-width:20ch;
+}
+.standfirst{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:60ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:26px;font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+.meta b{font-weight:400;color:var(--ink-2)}
+
+/* ---------- typography ---------- */
+h2{
+  font-family:var(--font-display);font-weight:700;font-size:27px;letter-spacing:-.02em;line-height:1.15;
+  margin:0 0 4px;text-wrap:balance;
+}
+h3{font-family:var(--font-display);font-weight:650;font-size:18px;letter-spacing:-.012em;margin:34px 0 8px;text-wrap:balance}
+h4{font-family:var(--font-display);font-weight:650;font-size:14.5px;letter-spacing:-.005em;margin:22px 0 4px}
+section{padding-top:58px;scroll-margin-top:20px}
+section > .wrap > p:first-of-type{margin-top:14px}
+p{margin:0 0 15px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.sec-num{font-family:var(--font-mono);font-size:12px;color:var(--accent);letter-spacing:.06em;padding-top:4px}
+.rule{height:1px;background:var(--line);margin:10px 0 22px}
+.lede{font-size:18px;color:var(--ink-2);max-width:62ch}
+strong{font-weight:650;color:var(--ink)}
+em{font-style:italic}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:3px;color:var(--ink)}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+ul,ol{margin:0 0 15px;padding-left:22px}
+li{margin-bottom:6px}
+li::marker{color:var(--muted)}
+.tight li{margin-bottom:2px}
+
+/* ---------- components ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:20px 22px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+.kicker{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 7px}
+.card h4{margin:0 0 6px}
+.card p:last-child{margin-bottom:0}
+.card p{font-size:15px}
+
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:16px 18px}
+.stat .n{font-family:var(--font-display);font-weight:700;font-size:27px;letter-spacing:-.025em;line-height:1.05;font-variant-numeric:tabular-nums;display:block}
+.stat .l{font-size:13.5px;color:var(--muted);line-height:1.35;display:block;margin-top:5px;font-family:var(--font-display)}
+
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:16px 20px;border-radius:0 4px 4px 0;margin:22px 0}
+.callout .kicker{color:var(--accent-2)}
+.callout p:last-child{margin-bottom:0}
+.callout.risk{border-left-color:var(--critical);background:var(--critical-soft)}
+.callout.risk .kicker{color:var(--critical)}
+.callout.note{border-left-color:var(--info);background:var(--info-soft)}
+.callout.note .kicker{color:var(--info)}
+
+.tag{display:inline-block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.05em;padding:2px 7px;border-radius:3px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line);white-space:nowrap}
+.tag.hi{background:var(--critical-soft);color:var(--critical);border-color:transparent;font-weight:600}
+.tag.md{background:var(--accent-soft);color:var(--accent-2);border-color:transparent;font-weight:600}
+.tag.lo{background:var(--ok-soft);color:var(--ok);border-color:transparent;font-weight:600}
+.tag.opt{background:transparent;color:var(--muted);border-style:dashed}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:5px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-family:var(--font-display);font-size:13.5px}
+th{
+  text-align:left;font-weight:650;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line-strong);white-space:nowrap;
+  background:var(--surface-2);font-family:var(--font-mono);
+}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.45;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:none}
+td:first-child{color:var(--ink);font-weight:600}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+th.num{text-align:right}
+code.t{background:transparent;padding:0;font-size:12.5px;color:var(--ink-2)}
+
+/* ---------- figures ---------- */
+figure{margin:28px 0;padding:0}
+figure svg{display:block;width:100%;height:auto;max-width:100%}
+.figbox{border:1px solid var(--line);border-radius:5px;background:var(--surface);padding:22px 20px 18px;overflow-x:auto}
+figcaption{
+  font-family:var(--font-display);font-size:13px;line-height:1.5;color:var(--muted);
+  margin-top:12px;padding-left:2px;max-width:82ch;
+}
+figcaption b{color:var(--ink-2);font-weight:650}
+.svg-fill-surface{fill:var(--surface)}
+.svg-fill-2{fill:var(--surface-2)}
+.svg-mono{font-family:var(--font-mono)}
+.svg-disp{font-family:var(--font-display)}
+
+/* ---------- pipeline stage list ---------- */
+.stages{display:flex;flex-direction:column;gap:0;margin:22px 0;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:var(--surface)}
+.stage{display:grid;grid-template-columns:64px minmax(0,1fr);gap:0;border-bottom:1px solid var(--line)}
+.stage:last-child{border-bottom:none}
+.stage-id{
+  font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--accent);
+  background:var(--surface-2);padding:16px 0 0;text-align:center;border-right:1px solid var(--line);
+}
+.stage-body{padding:15px 20px}
+.stage-body h4{margin:0 0 4px}
+.stage-body p{font-size:14.5px;margin:0 0 8px;color:var(--ink-2)}
+.stage-body p:last-child{margin-bottom:0}
+.stage-body .drop{font-family:var(--font-mono);font-size:11px;color:var(--muted);display:block;margin-top:6px}
+
+/* ---------- phases ---------- */
+.phase{display:grid;grid-template-columns:110px minmax(0,1fr);gap:20px;padding:20px 0;border-top:1px solid var(--line)}
+.phase:last-of-type{border-bottom:1px solid var(--line)}
+.phase-when{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);line-height:1.5;padding-top:3px}
+.phase-when b{display:block;color:var(--accent);font-weight:600;font-size:12px;letter-spacing:.05em;margin-bottom:3px}
+.phase h4{margin:0 0 6px;font-size:16px}
+.phase p{font-size:15px;margin:0 0 8px}
+.phase ul{font-size:14.5px;margin-bottom:0}
+
+hr.sep{border:none;border-top:1px solid var(--line);margin:0}
+
+@media (max-width:1080px){
+  :root{--rail:0px}
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{display:none}
+  .wrap,.bleed,.mast{padding-left:26px;padding-right:26px}
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  .g2,.g3,.g4{grid-template-columns:minmax(0,1fr)}
+  .phase{grid-template-columns:minmax(0,1fr);gap:8px}
+  .stage{grid-template-columns:44px minmax(0,1fr)}
+  .mast{padding-top:44px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="shell">
+<aside class="rail">
+  <div class="rail-mark">ExpressVision</div>
+  <div class="rail-sub">Architecture v1.0</div>
+  <nav id="toc">
+    <a href="#brief"><span>1</span>The brief, restated</a>
+    <a href="#physics"><span>2</span>Camera physics</a>
+    <a href="#layers"><span>3</span>System layers</a>
+    <a href="#cascade"><span>4</span>The gated cascade</a>
+    <a href="#taxonomy"><span>5</span>Species taxonomy</a>
+    <a href="#insects"><span>6</span>Insects, honestly</a>
+    <a href="#analytics"><span>7</span>Analytics engine</a>
+    <a href="#iot"><span>8</span>IoT sensing</a>
+    <a href="#alerts"><span>9</span>Alerting</a>
+    <a href="#evidence"><span>10</span>Evidence &amp; privacy</a>
+    <a href="#models"><span>11</span>Model strategy</a>
+    <a href="#data"><span>12</span>Data model</a>
+    <a href="#stack"><span>13</span>Stack &amp; sizing</a>
+    <a href="#roadmap"><span>14</span>Roadmap</a>
+    <a href="#risk"><span>15</span>Risk register</a>
+    <a href="#open"><span>16</span>Open questions</a>
+  </nav>
+</aside>
+
+<main class="main">
+
+<header class="mast">
+  <p class="eyebrow">Express Pesticides &middot; System Architecture</p>
+  <h1>Passive video analysis for pest detection and movement monitoring</h1>
+  <p class="standfirst">An end-to-end architecture for turning existing CCTV into a continuous pest-surveillance instrument &mdash; edge-resident detection, track-level validation, IoT correlation, and an evidence trail that survives an audit.</p>
+  <div class="meta">
+    <span><b>Scope</b> &nbsp;Multi-site, multi-tenant</span>
+    <span><b>Deployment</b> &nbsp;Edge-autonomous + cloud aggregation</span>
+    <span><b>Horizon</b> &nbsp;~9 months to sellable v1</span>
+    <span><b>Status</b> &nbsp;Draft for review</span>
+  </div>
+</header>
+
+<!-- ============ 1 ============ -->
+<section id="brief">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>The brief, restated</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Eight industries, seven pest classes, thirteen analytics, three output surfaces. Underneath all of it sits one engineering problem worth naming precisely, because everything else follows from it.</p>
+
+    <p><strong>Almost nothing happens, and when it does it is small, fast, and dark.</strong> A warehouse camera sees roughly 650,000 frames in a twelve-hour night. Perhaps twenty of them contain a rat. That rat is 25&nbsp;cm long, moving at 1.5&nbsp;m/s, lit only by an infrared illuminator, and it is gone in four seconds. The system's entire job is to find those twenty frames without drowning the client in the other 649,980.</p>
+
+    <p>That framing produces three non-negotiable design consequences, and they shape every layer below:</p>
+  </div>
+
+  <div class="bleed">
+    <div class="grid g3" style="margin:22px 0">
+      <div class="card">
+        <p class="kicker">Consequence 1</p>
+        <h4>Compute must be gated</h4>
+        <p>Running a detector on every frame of every camera is 26&times; more GPU than the job needs. Cheap motion gating first, expensive inference only on candidate regions. This is what makes 16 cameras per edge box affordable.</p>
+      </div>
+      <div class="card">
+        <p class="kicker">Consequence 2</p>
+        <h4>Never alert on one frame</h4>
+        <p>A single-frame detection is a coin flip. A <em>track</em> &mdash; the same object, classified consistently, moving plausibly across a dozen frames &mdash; is evidence. All alerting happens at track level, never detection level.</p>
+      </div>
+      <div class="card">
+        <p class="kicker">Consequence 3</p>
+        <h4>Pixels on target rule everything</h4>
+        <p>No model recovers a rat rendered at 14 pixels. Camera placement, lens choice and shutter speed determine the ceiling on accuracy before a single line of ML code is written. Site survey is phase zero.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h3>What "passive" buys, and what it costs</h3>
+    <p>Passive means the software observes feeds without controlling cameras, without lures, and without interrupting operations. That is the right commercial posture &mdash; it deploys into a live food plant on a Tuesday without a shutdown &mdash; but it means the system inherits whatever the existing CCTV was built for. Security cameras are mounted high and angled at human torso height with a wide field of view. Pests live at floor level, hug wall&ndash;floor junctions, and are one-tenth the size. <strong>Passive analysis of a security-optimised camera estate will underperform, and the survey in &sect;2 is how we find out by how much before committing.</strong></p>
+
+    <div class="callout">
+      <p class="kicker">Assumption stated up front</p>
+      <p>This architecture assumes ExpressVision is a <strong>service Express Pesticides sells to its clients</strong> &mdash; multi-tenant, many sites per tenant, technicians and client staff as separate roles &mdash; rather than an internal-only tool. Eight named industries points strongly that way. If it is internal-only, the tenancy layer, per-client branding and client-facing reports collapse out and roughly six weeks come off the roadmap. Flagged again in &sect;16.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="physics">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Camera physics: the accuracy ceiling</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Two numbers set the upper bound on what any model can achieve at a site. Both are fixed by hardware, not software, and both are usually wrong on an inherited estate.</p>
+
+    <h3>Pixels on target</h3>
+    <p>Detection needs roughly <strong>40&nbsp;px across the animal's long axis</strong>; reliable species identification needs about <strong>80&nbsp;px</strong>. Working backwards from a 25&nbsp;cm rodent gives a maximum useful range per camera configuration:</p>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>Camera configuration</th>
+            <th>Lens / HFOV</th>
+            <th class="num">Detect (40 px)</th>
+            <th class="num">Identify (80 px)</th>
+            <th>Typical role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>2 MP (1920 px wide)</td><td>2.8 mm &middot; ~100&deg;</td><td class="num">5.0 m</td><td class="num">2.5 m</td><td>Existing wide-area security cam &mdash; marginal</td></tr>
+          <tr><td>2 MP</td><td>6 mm &middot; ~53&deg;</td><td class="num">12.0 m</td><td class="num">6.0 m</td><td>Corridor / aisle run</td></tr>
+          <tr><td>4 MP (2560 px wide)</td><td>4 mm &middot; ~78&deg;</td><td class="num">9.9 m</td><td class="num">4.9 m</td><td>General-purpose pest-view</td></tr>
+          <tr><td>4 MP</td><td>8 mm &middot; ~40&deg;</td><td class="num">22.0 m</td><td class="num">11.0 m</td><td>Long aisle, dock approach</td></tr>
+          <tr><td>8 MP / 4K</td><td>4 mm &middot; ~78&deg;</td><td class="num">14.8 m</td><td class="num">7.4 m</td><td>Wide coverage where bandwidth allows</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-family:var(--font-display);font-size:13px;color:var(--muted);margin:-8px 0 0;padding:0 2px">Ranges assume a 25&nbsp;cm target spanning the horizontal axis and no optical degradation. Treat as planning figures for the survey, then verify with a tape measure and a test target on site.</p>
+  </div>
+
+  <div class="wrap">
+    <h3>Shutter speed &mdash; the failure nobody looks for</h3>
+    <p>A rat travelling 1.5&nbsp;m/s covers 5&nbsp;cm in a 1/30&nbsp;s exposure. At the pixel density that puts 40&nbsp;px on the animal, that is a <strong>9-pixel smear across a 40-pixel target</strong> &mdash; enough to destroy the shape the detector is looking for. Most installed cameras drop their shutter to 1/8&nbsp;s or slower at night to preserve image brightness, which turns every moving pest into a streak.</p>
+
+    <div class="callout risk">
+      <p class="kicker">Hard requirement</p>
+      <p>Every camera in scope must be configurable to a <strong>minimum shutter of 1/250&nbsp;s in night mode</strong>, which in turn requires enough IR illumination at the target distance to expose correctly. This single setting will do more for detection accuracy than any model improvement, and it costs nothing but a config push and, sometimes, a supplementary illuminator.</p>
+    </div>
+
+    <h3>The survey deliverable</h3>
+    <p>Phase 0 produces, per camera: resolution and codec, lens focal length, mounted height and tilt, measured distance to the nearest and furthest floor point in view, night shutter and gain behaviour, IR illuminator reach, and a five-minute overnight sample clip. From that we mark each camera <span class="tag lo">usable</span>, <span class="tag md">usable after reconfiguration</span>, or <span class="tag hi">needs supplementary camera</span>, and produce a bill of materials.</p>
+
+    <p>Supplementary pest-view cameras, where needed, are specified deliberately against the physics above: mounted 0.3&ndash;1.2&nbsp;m high, aimed <em>along</em> a wall&ndash;floor junction rather than across a room, 4&nbsp;MP with a moderate lens, fixed shutter floor, and dedicated IR. One well-placed pest-view camera on a loading dock threshold outperforms six ceiling domes.</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="layers">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>System layers</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Six layers, with the boundary that matters drawn at the site uplink. Everything needed to detect, validate, record and alert lives on-site; the cloud aggregates, analyses and presents. A site that loses its internet link keeps working and backfills later.</p>
+  </div>
+
+  <div class="bleed">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 500" role="img" aria-label="System topology: cameras and IoT sensors feed an on-site edge node that decodes, gates, detects, tracks and validates, buffering evidence locally; small event messages and clip uploads cross the site uplink to cloud services, and queue locally when the link is down." style="color:var(--ink-2)">
+          <defs>
+            <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="currentColor"/></marker>
+            <marker id="aha" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="var(--accent)"/></marker>
+          </defs>
+
+          <!-- column labels -->
+          <text x="16" y="24" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--muted)">L0 · CAPTURE</text>
+          <text x="212" y="24" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--muted)">L1 · EDGE NODE (ON SITE)</text>
+          <text x="640" y="24" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--muted)">L3 · CORE SERVICES</text>
+          <text x="640" y="392" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--muted)">L4 · APPLICATIONS</text>
+
+          <!-- L0 sources -->
+          <rect x="16" y="42" width="164" height="52" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="30" y="64" class="svg-disp" font-size="13" font-weight="650" fill="currentColor">Existing CCTV</text>
+          <text x="30" y="81" class="svg-mono" font-size="10.5" fill="var(--muted)">NVR · ONVIF · RTSP</text>
+
+          <rect x="16" y="106" width="164" height="52" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="30" y="128" class="svg-disp" font-size="13" font-weight="650" fill="currentColor">Pest-view cameras</text>
+          <text x="30" y="145" class="svg-mono" font-size="10.5" fill="var(--muted)">low-mount · fixed shutter</text>
+
+          <rect x="16" y="170" width="164" height="52" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="30" y="192" class="svg-disp" font-size="13" font-weight="650" fill="currentColor">ILT / bait-station cam</text>
+          <text x="30" y="209" class="svg-mono" font-size="10.5" fill="var(--muted)">scheduled stills</text>
+
+          <rect x="16" y="234" width="164" height="60" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="30" y="256" class="svg-disp" font-size="13" font-weight="650" fill="currentColor">IoT sensors</text>
+          <text x="30" y="273" class="svg-mono" font-size="10.5" fill="var(--muted)">temp · RH · door · light</text>
+          <text x="30" y="288" class="svg-mono" font-size="10.5" fill="var(--muted)">LoRaWAN gateway</text>
+
+          <!-- L1 edge node -->
+          <rect x="212" y="42" width="330" height="330" rx="6" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="228" y="66" class="svg-disp" font-size="13.5" font-weight="700" fill="var(--accent)">Jetson Orin NX · 8–16 cameras</text>
+
+          <rect x="228" y="80" width="140" height="40" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="240" y="98" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">HW decode</text>
+          <text x="240" y="112" class="svg-mono" font-size="9.5" fill="var(--muted)">NVDEC · full res held</text>
+
+          <rect x="386" y="80" width="140" height="40" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="398" y="98" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Motion gate</text>
+          <text x="398" y="112" class="svg-mono" font-size="9.5" fill="var(--muted)">MOG2 · CPU · 480p</text>
+
+          <rect x="228" y="132" width="140" height="40" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="240" y="150" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Tiled detector</text>
+          <text x="240" y="164" class="svg-mono" font-size="9.5" fill="var(--muted)">TensorRT INT8</text>
+
+          <rect x="386" y="132" width="140" height="40" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="398" y="150" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Tracker</text>
+          <text x="398" y="164" class="svg-mono" font-size="9.5" fill="var(--muted)">ByteTrack · Kalman</text>
+
+          <rect x="228" y="184" width="298" height="40" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="240" y="202" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Track validator &rarr; event assembler</text>
+          <text x="240" y="216" class="svg-mono" font-size="9.5" fill="var(--muted)">plausibility · zones · homography · clip cut</text>
+
+          <rect x="228" y="240" width="140" height="46" rx="3" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="240" y="258" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Ring buffer</text>
+          <text x="240" y="272" class="svg-mono" font-size="9.5" fill="var(--muted)">120 s/cam · NVMe</text>
+
+          <rect x="386" y="240" width="140" height="46" rx="3" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="398" y="258" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Store &amp; forward</text>
+          <text x="398" y="272" class="svg-mono" font-size="9.5" fill="var(--muted)">SQLite + spool</text>
+
+          <rect x="228" y="300" width="298" height="34" rx="3" fill="none" stroke="var(--line)" stroke-dasharray="3 3"/>
+          <text x="240" y="322" class="svg-mono" font-size="10" fill="var(--muted)">local rules · siren / relay out · offline console</text>
+
+          <text x="228" y="356" class="svg-mono" font-size="10" fill="var(--ok)">◆ detects, records and alerts with the uplink down</text>
+
+          <!-- boundary -->
+          <line x1="580" y1="36" x2="580" y2="470" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="5 4"/>
+          <text x="586" y="466" class="svg-mono" font-size="10" fill="var(--muted)">site uplink</text>
+
+          <!-- L3 cloud -->
+          <rect x="640" y="42" width="164" height="44" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="654" y="62" class="svg-disp" font-size="12" font-weight="650" fill="currentColor">Ingest API</text>
+          <text x="654" y="77" class="svg-mono" font-size="9.5" fill="var(--muted)">FastAPI · MQTT bridge</text>
+
+          <rect x="820" y="42" width="164" height="44" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="834" y="62" class="svg-disp" font-size="12" font-weight="650" fill="currentColor">Object store</text>
+          <text x="834" y="77" class="svg-mono" font-size="9.5" fill="var(--muted)">clips · stills · hashed</text>
+
+          <rect x="640" y="98" width="164" height="44" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="654" y="118" class="svg-disp" font-size="12" font-weight="650" fill="currentColor">Event store</text>
+          <text x="654" y="133" class="svg-mono" font-size="9.5" fill="var(--muted)">Postgres + Timescale</text>
+
+          <rect x="820" y="98" width="164" height="44" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="834" y="118" class="svg-disp" font-size="12" font-weight="650" fill="currentColor">Sensor series</text>
+          <text x="834" y="133" class="svg-mono" font-size="9.5" fill="var(--muted)">temp · RH · door state</text>
+
+          <rect x="640" y="154" width="164" height="44" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="654" y="174" class="svg-disp" font-size="12" font-weight="650" fill="currentColor">Rules &amp; alerting</text>
+          <text x="654" y="189" class="svg-mono" font-size="9.5" fill="var(--muted)">cooldown · escalation</text>
+
+          <rect x="820" y="154" width="164" height="44" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="834" y="174" class="svg-disp" font-size="12" font-weight="650" fill="currentColor">Analytics jobs</text>
+          <text x="834" y="189" class="svg-mono" font-size="9.5" fill="var(--muted)">heat maps · trends</text>
+
+          <rect x="640" y="210" width="344" height="44" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="654" y="230" class="svg-disp" font-size="12" font-weight="650" fill="currentColor">Report generator &middot; IPM recommendation engine</text>
+          <text x="654" y="245" class="svg-mono" font-size="9.5" fill="var(--muted)">daily / weekly / monthly PDF · findings → actions</text>
+
+          <rect x="640" y="266" width="344" height="44" rx="4" class="svg-fill-surface" stroke="var(--line-strong)"/>
+          <text x="654" y="286" class="svg-disp" font-size="12" font-weight="650" fill="currentColor">L5 &middot; MLOps</text>
+          <text x="654" y="301" class="svg-mono" font-size="9.5" fill="var(--muted)">labelling · training · registry · staged rollout</text>
+
+          <!-- L4 apps -->
+          <rect x="640" y="404" width="110" height="46" rx="4" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="652" y="424" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Web console</text>
+          <text x="652" y="439" class="svg-mono" font-size="9.5" fill="var(--muted)">live · verify</text>
+
+          <rect x="758" y="404" width="110" height="46" rx="4" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="770" y="424" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Mobile</text>
+          <text x="770" y="439" class="svg-mono" font-size="9.5" fill="var(--muted)">field tech</text>
+
+          <rect x="876" y="404" width="108" height="46" rx="4" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="888" y="424" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">WhatsApp</text>
+          <text x="888" y="439" class="svg-mono" font-size="9.5" fill="var(--muted)">SMS · email</text>
+
+          <!-- arrows L0 -> L1 -->
+          <line x1="180" y1="68" x2="206" y2="90" stroke="currentColor" marker-end="url(#ah)"/>
+          <line x1="180" y1="132" x2="206" y2="105" stroke="currentColor" marker-end="url(#ah)"/>
+          <line x1="180" y1="196" x2="206" y2="150" stroke="currentColor" marker-end="url(#ah)"/>
+          <line x1="180" y1="264" x2="206" y2="250" stroke="currentColor" marker-end="url(#ah)"/>
+          <text x="188" y="60" class="svg-mono" font-size="9.5" fill="var(--muted)">RTSP main stream</text>
+          <text x="188" y="300" class="svg-mono" font-size="9.5" fill="var(--muted)">MQTT</text>
+
+          <!-- arrows L1 -> cloud -->
+          <line x1="542" y1="205" x2="634" y2="70" stroke="currentColor" marker-end="url(#ah)"/>
+          <text x="548" y="128" class="svg-mono" font-size="9.5" fill="var(--muted)">events · ~2 KB</text>
+          <line x1="542" y1="262" x2="814" y2="70" stroke="var(--accent)" marker-end="url(#aha)" stroke-dasharray="4 3"/>
+          <text x="586" y="252" class="svg-mono" font-size="9.5" fill="var(--accent)">clips · ~4 MB · throttled, resumable</text>
+
+          <path d="M 470 286 L 470 344 L 560 344" fill="none" stroke="var(--accent)" stroke-dasharray="4 3"/>
+          <text x="476" y="360" class="svg-mono" font-size="9.5" fill="var(--accent)">spools here while offline, drains on reconnect</text>
+
+          <!-- cloud internal -->
+          <line x1="722" y1="86" x2="722" y2="94" stroke="currentColor" marker-end="url(#ah)"/>
+          <line x1="722" y1="142" x2="722" y2="150" stroke="currentColor" marker-end="url(#ah)"/>
+          <line x1="812" y1="254" x2="812" y2="398" stroke="currentColor" marker-end="url(#ah)"/>
+          <line x1="700" y1="198" x2="700" y2="398" stroke="currentColor" marker-end="url(#ah)"/>
+        </svg>
+      </div>
+      <figcaption><b>Figure 1 &mdash; Topology.</b> The dashed vertical line is the only fragile link in the system. Detection, tracking, validation, evidence capture and local alerting all sit to its left; if the uplink drops, the edge node keeps running and spools events and clips to disk, draining them when connectivity returns. Nothing on the right-hand side is required for a site to do its job.</figcaption>
+    </figure>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Layer</th><th>Responsibility</th><th>Runs where</th><th>Notes that matter</th></tr></thead>
+        <tbody>
+          <tr><td>L0 &middot; Capture</td><td>Video and sensor acquisition</td><td>Site</td><td>Pull the <em>main</em> stream, not the sub-stream &mdash; sub-streams are D1 and destroy small targets. Gate on a downscaled copy instead.</td></tr>
+          <tr><td>L1 &middot; Edge inference</td><td>Gate, detect, track, validate, assemble events, buffer</td><td>Site</td><td>Fully autonomous. Holds 120 s rolling video per camera so evidence clips start <em>before</em> the detection.</td></tr>
+          <tr><td>L2 &middot; Transport</td><td>Event and media delivery</td><td>Both</td><td>MQTT/TLS for metadata, presigned resumable PUT for media, bandwidth-capped so it never saturates a site link during business hours.</td></tr>
+          <tr><td>L3 &middot; Core services</td><td>Storage, rules, analytics, reporting</td><td>Cloud or on-prem server</td><td>Same container set either way &mdash; hospitals and some food clients will require on-prem, so this must not assume cloud.</td></tr>
+          <tr><td>L4 &middot; Applications</td><td>Console, mobile, alert channels, API</td><td>Client-facing</td><td>The verify control in the event feed is also the training-data pipeline. See &sect;11.</td></tr>
+          <tr><td>L5 &middot; MLOps</td><td>Labelling, training, registry, rollout</td><td>Internal</td><td>Not an afterthought. The system's accuracy comes from this loop turning, not from the initial model.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h3>Bandwidth budget</h3>
+    <p>An event carries about 2&nbsp;KB of metadata and a 15-second H.264 clip at roughly 4&nbsp;MB. A busy site producing 200 events a night moves about <strong>800&nbsp;MB overnight</strong> &mdash; trivial for a fibre link, manageable on 4G with the throttle set. Metadata alone is under half a megabyte a night, so a site on a degraded link can be configured to send events immediately and defer clips to a daily window without losing analytics fidelity.</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="cascade">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>The gated cascade</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Seven stages, each of which exists to throw work away. The compounding discard rate is the central performance property of the system &mdash; it is what turns an intractable 24/7 inference problem into something a $600 edge box handles for sixteen cameras.</p>
+  </div>
+
+  <div class="bleed">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 900 400" role="img" aria-label="Funnel showing one camera over a twelve-hour night: 648,000 frames decoded reduce through motion gating, tiled inference, tracking and validation down to 3 alerts sent." style="color:var(--ink-2)">
+          <text x="12" y="18" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--muted)">ONE CAMERA · ONE 12-HOUR NIGHT · REPRESENTATIVE WAREHOUSE</text>
+
+          <g class="svg-mono" font-size="11">
+            <rect x="12" y="34" width="700" height="30" rx="2" fill="var(--accent)" opacity="0.24"/>
+            <text x="22" y="54" class="svg-disp" font-size="12.5" font-weight="650" fill="currentColor">Frames decoded</text>
+            <text x="702" y="54" text-anchor="end" fill="currentColor" font-weight="600">648,000</text>
+            <text x="722" y="54" fill="var(--muted)" font-size="10.5">15 fps × 12 h</text>
+
+            <rect x="12" y="76" width="531" height="30" rx="2" fill="var(--accent)" opacity="0.24"/>
+            <text x="22" y="96" class="svg-disp" font-size="12.5" font-weight="650" fill="currentColor">Passed motion gate</text>
+            <text x="533" y="96" text-anchor="end" fill="currentColor" font-weight="600">26,000</text>
+            <text x="722" y="96" fill="var(--muted)" font-size="10.5">−96% · wind, staff, forklifts</text>
+
+            <rect x="12" y="118" width="530" height="30" rx="2" fill="var(--accent)" opacity="0.24"/>
+            <text x="22" y="138" class="svg-disp" font-size="12.5" font-weight="650" fill="currentColor">Tiles inferred</text>
+            <text x="532" y="138" text-anchor="end" fill="currentColor" font-weight="600">25,000</text>
+            <text x="722" y="138" fill="var(--muted)" font-size="10.5">≈9 tiles/s avg on GPU</text>
+
+            <rect x="12" y="160" width="434" height="30" rx="2" fill="var(--accent)" opacity="0.24"/>
+            <text x="22" y="180" class="svg-disp" font-size="12.5" font-weight="650" fill="currentColor">Raw detections</text>
+            <text x="436" y="180" text-anchor="end" fill="currentColor" font-weight="600">4,000</text>
+            <text x="722" y="180" fill="var(--muted)" font-size="10.5">conf ≥ 0.25</text>
+
+            <rect x="12" y="202" width="306" height="30" rx="2" fill="var(--accent)" opacity="0.3"/>
+            <text x="22" y="222" class="svg-disp" font-size="12.5" font-weight="650" fill="currentColor">Tracks formed</text>
+            <text x="308" y="222" text-anchor="end" fill="currentColor" font-weight="600">350</text>
+            <text x="722" y="222" fill="var(--muted)" font-size="10.5">ByteTrack association</text>
+
+            <rect x="12" y="244" width="169" height="30" rx="2" fill="var(--accent)" opacity="0.42"/>
+            <text x="22" y="264" class="svg-disp" font-size="12.5" font-weight="650" fill="currentColor">Validated events</text>
+            <text x="191" y="264" fill="currentColor" font-weight="600">25</text>
+            <text x="722" y="264" fill="var(--muted)" font-size="10.5">−93% · the FP firewall</text>
+
+            <rect x="12" y="286" width="152" height="30" rx="2" fill="var(--accent)" opacity="0.42"/>
+            <text x="22" y="306" class="svg-disp" font-size="12.5" font-weight="650" fill="currentColor">Merged incidents</text>
+            <text x="174" y="306" fill="currentColor" font-weight="600">18</text>
+            <text x="722" y="306" fill="var(--muted)" font-size="10.5">cross-camera dedupe</text>
+
+            <rect x="12" y="328" width="58" height="30" rx="2" fill="var(--accent)"/>
+            <text x="22" y="348" class="svg-disp" font-size="12.5" font-weight="650" fill="var(--ground)">Alerts</text>
+            <text x="80" y="348" fill="currentColor" font-weight="600">3</text>
+            <text x="722" y="348" fill="var(--muted)" font-size="10.5">after rules + cooldown</text>
+          </g>
+
+          <line x1="12" y1="372" x2="888" y2="372" stroke="var(--line)"/>
+          <text x="12" y="390" class="svg-mono" font-size="10" fill="var(--muted)">bar widths log-scaled · gating alone removes 26× of the inference load</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 2 &mdash; What the cascade discards.</b> Running the detector on every decoded frame would mean 648,000 inferences per camera-night; motion gating plus tiling brings that to 25,000, which is what allows sixteen cameras to share one Jetson Orin NX with headroom. The steep drop from 350 tracks to 25 events is the false-positive firewall doing its work &mdash; without it, the client receives 350 alerts a night and stops reading them within a week.</figcaption>
+    </figure>
+  </div>
+
+  <div class="wrap">
+    <h3>Stage by stage</h3>
+  </div>
+
+  <div class="bleed">
+    <div class="stages">
+      <div class="stage"><div class="stage-id">A</div><div class="stage-body">
+        <h4>Decode and downscale</h4>
+        <p>Hardware decode via NVDEC. The full-resolution frame stays resident in GPU memory; a 480p greyscale copy goes to the gate. Never gate on a downscaled frame and then infer on it too &mdash; the whole point is keeping native pixels available for stage C.</p>
+      </div></div>
+      <div class="stage"><div class="stage-id">B</div><div class="stage-body">
+        <h4>Motion gate</h4>
+        <p>MOG2 background subtraction with per-camera adaptive learning rate and shadow suppression, morphological open/close, contour extraction to candidate ROI boxes. Rejects on implausible area and aspect ratio.</p>
+        <p>Two guards that field deployments always end up needing: a <strong>global-change guard</strong> that detects a light switch, an IR-cut filter toggle at dawn, or a bumped camera (&gt;25% of pixels changed) and resets the background model instead of emitting thousands of candidates; and <strong>tamper/defocus detection</strong> via Laplacian variance collapse, which catches the spider web across the lens that silently kills more outdoor analytics than any other cause.</p>
+        <span class="drop">discards ~96% of frames</span>
+      </div></div>
+      <div class="stage"><div class="stage-id">C</div><div class="stage-body">
+        <h4>Tiled detection at native resolution</h4>
+        <p>Each ROI is expanded to a 640&times;640 tile cut from the <em>full-resolution</em> frame, tiles are batched across all cameras on the node, and a TensorRT INT8 detector runs the batch. Boxes are mapped back to full-frame coordinates and NMS is applied there, so objects straddling tile edges resolve correctly.</p>
+        <p>This is the single most consequential decision in the vision pipeline &mdash; Figure 3 shows why.</p>
+        <span class="drop">~1.5 tiles per gated frame</span>
+      </div></div>
+      <div class="stage"><div class="stage-id">D</div><div class="stage-body">
+        <h4>Multi-object tracking</h4>
+        <p>ByteTrack with a constant-velocity Kalman filter, per camera. ByteTrack is chosen specifically because it associates <em>low-confidence</em> detections into existing tracks &mdash; exactly the regime pest detection lives in, where a rat behind a pallet leg drops to 0.3 confidence for six frames. Track buffer of ~30 frames survives occlusion behind racking.</p>
+      </div></div>
+      <div class="stage"><div class="stage-id">E</div><div class="stage-body">
+        <h4>Track validation &mdash; the false-positive firewall</h4>
+        <p>A track is promoted to an event only if it clears every gate: at least 5 detections, a consistent top class across at least 3 frames, net displacement above a threshold, and a motion-plausibility score.</p>
+        <p>Plausibility is a small gradient-boosted classifier over track features &mdash; speed profile, acceleration bounds, net-to-gross displacement ratio, scale stability, body-axis-to-heading alignment. It separates living creatures from the things that fool frame-level detectors: swaying vegetation oscillates about a fixed point so net displacement is near zero; a wind-blown bag tumbles with implausible acceleration; a water drop or near-lens insect shows extreme apparent speed with out-of-plane scale change. It is cheap, and it is trained on the operator verdicts from &sect;11.</p>
+        <span class="drop">discards ~93% of tracks</span>
+      </div></div>
+      <div class="stage"><div class="stage-id">F</div><div class="stage-body">
+        <h4>Event assembly</h4>
+        <p>Pulls 8 s pre-roll and 5 s post-roll from the ring buffer, cuts the clip, renders an annotated keyframe, simplifies the trajectory (Ramer&ndash;Douglas&ndash;Peucker), projects it to floor-plane coordinates through the camera homography, assigns zones, and computes dwell time, heading and speed.</p>
+      </div></div>
+      <div class="stage"><div class="stage-id">G</div><div class="stage-body">
+        <h4>Cross-camera and temporal association</h4>
+        <p>Events at the same site, on adjacent cameras, within a short window and in adjacent zones merge into one <em>incident</em>. Without this, one rat crossing three overlapping camera views is counted three times and every analytic downstream is inflated.</p>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="bleed">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 880 300" role="img" aria-label="Comparison of whole-frame downscaling against motion-gated tiling: downscaling a 1920 by 1080 frame to 640 renders a rat at 13 pixels, while cutting a 640 pixel tile at native resolution preserves it at 40 pixels." style="color:var(--ink-2)">
+          <text x="12" y="18" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--muted)">OPTION A · WHOLE FRAME, DOWNSCALED</text>
+          <text x="460" y="18" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--accent)">OPTION B · MOTION-GATED TILE, NATIVE</text>
+
+          <!-- A -->
+          <rect x="12" y="32" width="400" height="225" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="24" y="52" class="svg-mono" font-size="10" fill="var(--muted)">1920 × 1080 source</text>
+          <line x1="24" y1="62" x2="400" y2="62" stroke="var(--line)"/>
+          <rect x="120" y="80" width="184" height="104" rx="2" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>
+          <text x="132" y="98" class="svg-mono" font-size="10" fill="var(--muted)">resized to 640 × 360</text>
+          <rect x="196" y="132" width="13" height="7" fill="var(--critical)"/>
+          <text x="216" y="140" class="svg-mono" font-size="10.5" fill="var(--critical)">rat → 13 px</text>
+          <text x="24" y="212" class="svg-disp" font-size="12.5" font-weight="650" fill="var(--critical)">Below the detection floor</text>
+          <text x="24" y="232" class="svg-mono" font-size="10.5" fill="var(--muted)">3× linear resolution destroyed before</text>
+          <text x="24" y="246" class="svg-mono" font-size="10.5" fill="var(--muted)">the model ever sees the animal</text>
+
+          <!-- B -->
+          <rect x="460" y="32" width="408" height="225" rx="3" class="svg-fill-2" stroke="var(--accent)"/>
+          <text x="472" y="52" class="svg-mono" font-size="10" fill="var(--muted)">1920 × 1080 source</text>
+          <line x1="472" y1="62" x2="856" y2="62" stroke="var(--line)"/>
+          <rect x="560" y="78" width="176" height="99" rx="2" fill="none" stroke="var(--line-strong)"/>
+          <text x="572" y="94" class="svg-mono" font-size="9.5" fill="var(--muted)">motion ROI found here</text>
+          <rect x="620" y="106" width="58" height="58" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="684" y="122" class="svg-mono" font-size="9.5" fill="var(--accent)">640 px tile,</text>
+          <text x="684" y="134" class="svg-mono" font-size="9.5" fill="var(--accent)">cut 1:1</text>
+          <rect x="640" y="130" width="20" height="11" fill="var(--ok)"/>
+          <text x="620" y="196" class="svg-mono" font-size="10.5" fill="var(--ok)">rat → 40 px</text>
+          <text x="472" y="212" class="svg-disp" font-size="12.5" font-weight="650" fill="var(--ok)">Detectable, and identifiable at range</text>
+          <text x="472" y="232" class="svg-mono" font-size="10.5" fill="var(--muted)">every original pixel on the target reaches</text>
+          <text x="472" y="246" class="svg-mono" font-size="10.5" fill="var(--muted)">the detector, at ~1.5 tiles per gated frame</text>
+
+          <line x1="12" y1="274" x2="868" y2="274" stroke="var(--line)"/>
+          <text x="12" y="292" class="svg-mono" font-size="10" fill="var(--muted)">same frame · same model · same GPU budget</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 3 &mdash; Why tiling, not downscaling.</b> The standard pipeline resizes each frame to the detector's input size, which is fine for people and vehicles and fatal for pests. Because the motion gate has already localised the interesting region, we can afford to cut a tile at native resolution instead &mdash; the same GPU work, three times the pixels on target.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="taxonomy">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><h2>A taxonomy that degrades gracefully</h2></div>
+    <div class="rule"></div>
+    <p class="lede">The requested species list mixes classes a detector can separate reliably with pairs it cannot &mdash; a rat and a mouse at twelve metres in infrared are the same grey blob. Forcing a fine-grained answer the pixels do not support is how these systems lose client trust.</p>
+
+    <p>The system therefore classifies hierarchically and reports at the deepest level the evidence justifies:</p>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Level</th><th>Classes</th><th>Emitted when</th><th>Confidence in practice</th></tr></thead>
+        <tbody>
+          <tr><td>L1 &middot; Presence</td><td><code class="t">animal</code> <code class="t">human</code> <code class="t">vehicle</code> <code class="t">other-motion</code></td><td>Always</td><td>High &mdash; this is where recall is protected</td></tr>
+          <tr><td>L2 &middot; Group</td><td><code class="t">rodent</code> <code class="t">bird</code> <code class="t">reptile</code> <code class="t">carnivore</code> <code class="t">insect</code></td><td>Always, with a confidence score</td><td>Good above ~40 px on target</td></tr>
+          <tr><td>L3 &middot; Species</td><td><code class="t">rat</code>/<code class="t">mouse</code>, <code class="t">gecko</code>/<code class="t">snake</code>, <code class="t">dog</code>/<code class="t">cat</code>, bird type</td><td>Only when box &ge; 80 px and L3 confidence clears threshold</td><td>Variable &mdash; suppressed rather than guessed</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <p>The UI shows <code>rodent &mdash; rat likely (0.62)</code> rather than a confident <code>mouse</code>. Analytics roll up at L2 by default so that trend lines are not corrupted by L3 noise, with L3 breakdowns available where the sample supports them. The client's optional "pest species distribution" requirement is satisfied at L2 immediately and at L3 as the training set matures.</p>
+
+    <div class="callout note">
+      <p class="kicker">Why human detection is mandatory</p>
+      <p>People are not pests, but the class earns its place four times over: it <strong>suppresses false alerts</strong> from human shadows and reflections, it <strong>contextualises activity</strong> (movement during staffed hours means something different), it <strong>drives privacy blurring</strong> before any clip leaves the site, and it <strong>verifies service visits</strong> &mdash; proof that a technician actually walked the dock at 02:40 is a commercial product in its own right for a pest-control company.</p>
+    </div>
+
+    <h3>One addition worth making</h3>
+    <p>The brief leaves room under "other relevant animals/insects", and <strong>cockroaches belong there</strong>. They are the dominant complaint in food processing, restaurants and hotels &mdash; three of the eight named industries &mdash; and they are technically tractable: nocturnal, high-contrast against floors and walls under IR, 2&ndash;4&nbsp;cm, moving in-plane on flat surfaces. They need close-range cameras (under about 2.5&nbsp;m, so kitchen and prep-area placements) but within that constraint they detect well, and the glue-board technique in &sect;6 counts them precisely. Recommend adding as an L2 class in Phase 2.</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="insects">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Flying insects, honestly</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Of everything in the brief, this is the requirement most likely to disappoint if approached literally. It is worth being straight about why, and then redirecting to the version that genuinely works &mdash; which happens to be closer to how pest control already operates.</p>
+
+    <p>Detecting and identifying individual flying insects in open air is not reliably solvable with room cameras. Near the lens an insect is an enormous, motion-blurred, out-of-focus smear with no stable appearance; a few metres away it is sub-pixel. In between it is a fast-moving two-pixel dot with no texture for a classifier to work with. There is no camera placement that puts a housefly in the 40-pixel sweet spot across a useful volume of a room.</p>
+
+    <p>So the system splits the requirement into two things it can actually deliver:</p>
+  </div>
+
+  <div class="bleed">
+    <div class="grid g2" style="margin:22px 0">
+      <div class="card">
+        <p class="kicker">Track 1 &middot; ambient</p>
+        <h4>Flying Insect Activity Index</h4>
+        <p>Do not name individuals &mdash; measure the phenomenon. Count qualifying motion-blob events per minute in a calibrated volume, normalise per camera and per illumination condition, and publish a <strong>trend</strong>, not a count. Correlated against temperature and humidity (&sect;8) this answers the question IPM actually asks: <em>is flying insect pressure rising in this zone this week?</em></p>
+        <p>Delivered as an index with a baseline band, never as "14 flies detected", because that number would be wrong and the client would eventually discover it.</p>
+      </div>
+      <div class="card" style="border-color:var(--accent)">
+        <p class="kicker">Track 2 &middot; instrumented</p>
+        <h4>Glue-board and bait-station counting</h4>
+        <p>Point a fixed, close-range, evenly-lit camera at an <strong>insect light trap glue board</strong> and run a small-object detector on a still frame every 30 minutes. The insects are stationary, in-plane, high-contrast, at known scale and known distance &mdash; every property that made the open-air problem hard is now solved by the mounting.</p>
+        <p>Counting becomes accurate, species grouping becomes feasible, and the output is <em>already</em> the KPI the industry uses. The same approach instruments bait stations for rodent take and visit counts.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <p>Track 2 is the recommendation to lead with commercially. It converts an unreliable computer-vision problem into a reliable one purely through fixturing, it automates a task technicians currently do by hand with a clicker on a monthly walk, and it produces defensible numbers for food-safety audits. It also builds the labelled insect dataset that eventually improves Track 1.</p>
+
+    <div class="callout risk">
+      <p class="kicker">Set this expectation in writing</p>
+      <p>The contract and the demo should both present flying insects as an <strong>activity index plus instrumented counting</strong>, not as per-insect detection and identification in open air. Agreeing this before build is far cheaper than renegotiating it at acceptance testing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="analytics">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">07</span><h2>Analytics engine</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Every analytic in the brief, mapped to the data it comes from and the method that computes it. Two ideas do disproportionate work here: <strong>zones</strong>, which make numbers actionable, and <strong>uptime normalisation</strong>, which stops the system from quietly lying.</p>
+
+    <h3>Zones and the floor plane</h3>
+    <p>During commissioning an operator draws polygons on each camera view &mdash; <em>dock threshold</em>, <em>dry store aisle 3</em>, <em>waste bay</em>, <em>prep counter</em>, <em>wall junction east</em> &mdash; and marks each frame edge as either a physical boundary or a continuation of open space. Optionally they click four ground-plane correspondence points to establish a homography onto the site floor plan.</p>
+    <p>Zones turn "17 detections on camera 4" into "17 rodent events at the dock threshold", which a technician can act on. The homography turns per-camera heat maps into a single site-wide heat map on the actual floor plan, which is what a client wants to see in a monthly review.</p>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Requested analytic</th><th>Computed from</th><th>Method</th></tr></thead>
+        <tbody>
+          <tr><td>Number of detections</td><td>Events</td><td>Count of incidents after cross-camera dedupe &mdash; never raw detections</td></tr>
+          <tr><td>Detection frequency</td><td>Events</td><td>Events per camera-night against a rolling 7- and 28-day baseline, reported as a z-score so "unusual" is defined per site</td></tr>
+          <tr><td>Time and date of activity</td><td>Event timestamps</td><td>Stored UTC, rendered in site-local time; DST and multi-region safe</td></tr>
+          <tr><td>Peak activity time</td><td>Events</td><td>24-bin circular histogram with KDE smoothing, per species and per zone</td></tr>
+          <tr><td>Movement direction</td><td>Tracks</td><td>First-to-last displacement vector in floor-plane coordinates, binned to 8 sectors; reported relative to zone boundaries (entering / leaving / traversing)</td></tr>
+          <tr><td>Movement path</td><td>Tracks</td><td>Simplified polyline stored as geometry, replayable over the keyframe or the floor plan</td></tr>
+          <tr><td>Duration of activity</td><td>Tracks</td><td>Track lifetime; incident duration where tracks merge across cameras</td></tr>
+          <tr><td>Repeated visits</td><td>Events</td><td>DBSCAN over (zone &times; time-of-day &times; date) &mdash; a cluster spanning multiple nights at a consistent hour is a repeat pattern, not a coincidence</td></tr>
+          <tr><td>High-activity locations</td><td>Tracks</td><td>Zone-level event rate normalised by zone area <em>and</em> by camera coverage, so a heavily-covered zone doesn't win by default</td></tr>
+          <tr><td>Camera-wise activity</td><td>Events + device health</td><td>Grouped by camera, <strong>normalised by camera uptime</strong></td></tr>
+          <tr><td>Species distribution <span class="tag opt">optional</span></td><td>Events</td><td>Confidence-weighted share at L2, with L3 breakdown where sample size supports it</td></tr>
+          <tr><td>Heat map <span class="tag opt">optional</span></td><td>Tracks</td><td>2D histogram of track points with Gaussian smoothing; per-camera always, site-wide floor-plan overlay where homography is calibrated</td></tr>
+          <tr><td>Period comparison</td><td>Events + sensors</td><td>Period-over-period with uptime normalisation and temperature as a covariate, so a cold snap doesn't read as a treatment failure</td></tr>
+          <tr><td>Entry points</td><td>Track origins</td><td>Origin-point clustering &mdash; see below</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="callout risk">
+      <p class="kicker">The way these systems lie</p>
+      <p>A camera that was offline for three nights produces zero events, and an un-normalised dashboard renders that as <strong>zero pest activity</strong> &mdash; the most dangerous possible false reassurance in a food plant. Every count in the system is divided by observed camera-hours, and any report covering a period with less than 90% coverage carries an explicit coverage figure on its face.</p>
+    </div>
+
+    <h3>Inferring entry points from where tracks begin</h3>
+    <p>The brief asks for entry-point identification, and there is an elegant way to get it that needs no extra hardware. A pest entering through a gap appears in frame <em>for the first time</em> at that gap. Individually a track origin means little; across weeks, the origins pile up.</p>
+  </div>
+
+  <div class="bleed">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 720 320" role="img" aria-label="A camera view in which several rodent track polylines fan outward, all originating from a tight cluster of points at a gap beneath a roller shutter; the cluster is circled and labelled as an entry point candidate." style="color:var(--ink-2)">
+          <text x="12" y="18" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--muted)">CAMERA 04 · DOCK · 14 NIGHTS OF RODENT TRACKS OVERLAID</text>
+
+          <rect x="12" y="32" width="480" height="240" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+
+          <!-- wall along bottom-left with a gap -->
+          <line x1="12" y1="236" x2="150" y2="236" stroke="currentColor" stroke-width="3"/>
+          <line x1="182" y1="236" x2="492" y2="236" stroke="currentColor" stroke-width="3"/>
+          <text x="22" y="256" class="svg-mono" font-size="10" fill="var(--muted)">wall / floor junction</text>
+          <text x="150" y="290" class="svg-mono" font-size="10.5" fill="var(--accent)">32 mm gap under roller shutter</text>
+          <line x1="166" y1="240" x2="166" y2="278" stroke="var(--accent)" stroke-dasharray="2 3"/>
+
+          <!-- racking hints -->
+          <rect x="300" y="70" width="70" height="120" rx="2" fill="none" stroke="var(--line)" stroke-dasharray="4 3"/>
+          <text x="306" y="64" class="svg-mono" font-size="9.5" fill="var(--muted)">racking</text>
+
+          <!-- tracks fanning from the gap -->
+          <g fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.75">
+            <path d="M168 232 C 200 210, 250 200, 300 178"/>
+            <path d="M164 230 C 190 196, 230 160, 268 132"/>
+            <path d="M170 233 C 220 224, 290 220, 360 212"/>
+            <path d="M162 231 C 176 190, 172 140, 186 96"/>
+            <path d="M167 234 C 230 232, 320 236, 400 230"/>
+            <path d="M165 229 C 210 202, 268 176, 330 150"/>
+          </g>
+          <!-- origin dots -->
+          <g fill="var(--accent)">
+            <circle cx="168" cy="232" r="3"/><circle cx="164" cy="230" r="3"/><circle cx="170" cy="233" r="3"/>
+            <circle cx="162" cy="231" r="3"/><circle cx="167" cy="234" r="3"/><circle cx="165" cy="229" r="3"/>
+          </g>
+          <circle cx="166" cy="231" r="19" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+          <!-- a distractor cluster at the open frame edge -->
+          <g fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4">
+            <path d="M490 120 C 450 128, 420 140, 392 152"/>
+            <path d="M490 138 C 452 148, 430 158, 404 168"/>
+          </g>
+          <g fill="var(--muted)"><circle cx="490" cy="120" r="3"/><circle cx="490" cy="138" r="3"/></g>
+
+          <!-- annotation panel -->
+          <text x="516" y="60" class="svg-disp" font-size="13" font-weight="700" fill="var(--accent)">Cluster A — ranked 1</text>
+          <text x="516" y="80" class="svg-mono" font-size="10.5" fill="currentColor">34 track origins</text>
+          <text x="516" y="96" class="svg-mono" font-size="10.5" fill="currentColor">11 of 14 nights</text>
+          <text x="516" y="112" class="svg-mono" font-size="10.5" fill="currentColor">92% rodent</text>
+          <text x="516" y="128" class="svg-mono" font-size="10.5" fill="currentColor">peak 01:40–03:10</text>
+          <text x="516" y="150" class="svg-disp" font-size="11.5" font-weight="650" fill="var(--ok)">→ entry point candidate</text>
+          <text x="516" y="166" class="svg-mono" font-size="10" fill="var(--muted)">inspect shutter seal</text>
+
+          <line x1="516" y1="186" x2="708" y2="186" stroke="var(--line)"/>
+          <text x="516" y="210" class="svg-disp" font-size="13" font-weight="650" fill="var(--muted)">Cluster B — rejected</text>
+          <text x="516" y="230" class="svg-mono" font-size="10.5" fill="var(--muted)">origins sit on a frame</text>
+          <text x="516" y="246" class="svg-mono" font-size="10.5" fill="var(--muted)">edge marked “open view”</text>
+          <text x="516" y="262" class="svg-mono" font-size="10.5" fill="var(--muted)">— field-of-view artefact,</text>
+          <text x="516" y="278" class="svg-mono" font-size="10.5" fill="var(--muted)">not an entry point</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 4 &mdash; Entry points fall out of track origins.</b> DBSCAN over the first observed position of every validated track, in floor-plane coordinates, accumulated over weeks. Dense persistent clusters are entry-point candidates, ranked by track count, night-coverage and species purity, each backed by its evidence clips. The filter that makes this trustworthy is the frame-edge annotation from zone setup: a cluster on an edge the operator marked as open view is a field-of-view artefact, not a hole in the building. Clustering track <em>termini</em> the same way surfaces harbourage candidates.</figcaption>
+    </figure>
+  </div>
+
+  <div class="wrap">
+    <h3>From findings to recommendations</h3>
+    <p>The brief's final report requirement &mdash; "recommendations for inspection" &mdash; is served by a rules engine over the analytics above, not by a language model inventing advice. Findings map to actions through an IPM rule table maintained with Express Pesticides' own technicians, so the output carries their expertise rather than generic guidance:</p>
+    <div class="card" style="margin:18px 0;font-family:var(--font-mono);font-size:12.5px;line-height:1.7;color:var(--ink-2)">
+      <div style="color:var(--muted);font-size:10.5px;letter-spacing:.08em;margin-bottom:10px">RULE FIRED &middot; SITE 041 &middot; WEEK 32</div>
+      rodent origin-cluster persistent &ge; 7 nights<br>
+      &nbsp;&nbsp;AND zone.type = dock<br>
+      &nbsp;&nbsp;AND peak_hour &isin; [00:00, 04:00]<br>
+      <span style="color:var(--accent)">&rarr; inspect dock-door seal and brush strip at cluster A</span><br>
+      <span style="color:var(--accent)">&rarr; place snap traps along east wall junction, 3 m spacing</span><br>
+      <span style="color:var(--accent)">&rarr; re-survey after 14 nights; expect origin count &lt; 8</span>
+    </div>
+    <p>Every recommendation carries the evidence that triggered it &mdash; clip, trajectory, cluster statistics &mdash; so a technician can judge it rather than take it on faith, and so the client can see why they are being asked to spend money.</p>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="iot">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">08</span><h2>IoT sensing and correlation</h2></div>
+    <div class="rule"></div>
+    <p class="lede">The brief is explicit that IoT is required but should be applied where it earns its place. The value is not in the readings themselves &mdash; it is in what they explain about the video, and in the one sensor class that turns detection into diagnosis.</p>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Sensor</th><th>Where</th><th>What it explains</th><th>Priority</th></tr></thead>
+        <tbody>
+          <tr><td>Temperature + humidity</td><td>Per zone, 1 per 400 m&sup2;</td><td>Rodent and insect activity are strongly temperature-driven; supplies the covariate that keeps period comparisons honest</td><td><span class="tag hi">Core</span></td></tr>
+          <tr><td>Door / shutter contact</td><td>Every dock door and external door</td><td>Ties entry events to operational behaviour &mdash; the single highest-value correlation in the system</td><td><span class="tag hi">Core</span></td></tr>
+          <tr><td>Ambient light</td><td>Per camera group</td><td>Normalises the insect activity index and explains detector confidence shifts at dusk/dawn</td><td><span class="tag md">Phase 3</span></td></tr>
+          <tr><td>Bait station trigger</td><td>Per station</td><td>IR beam or vibration; gives take/visit data where a camera is impractical</td><td><span class="tag md">Phase 3</span></td></tr>
+          <tr><td>ILT glue-board camera</td><td>Per trap</td><td>Accurate insect counts (&sect;6)</td><td><span class="tag md">Phase 3</span></td></tr>
+          <tr><td>Differential pressure</td><td>Dock and clean-room thresholds</td><td>Negative pressure draws insects inward; explains persistent ingress at a threshold that looks sealed</td><td><span class="tag lo">Optional</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <p><strong>Transport.</strong> LoRaWAN for the sensor fleet, with a single gateway per site feeding MQTT into the edge node. The reasoning is specific to the environment: warehouses and factories are RF-hostile &mdash; steel racking, concrete, metal-clad walls &mdash; and LoRa penetrates where Wi-Fi and Zigbee will not, at battery lives measured in years rather than months. Small sites with good Wi-Fi coverage can use ESP32-class nodes instead and skip the gateway.</p>
+
+    <h3>What correlation actually produces</h3>
+    <p>Readings land in the same time-series store as events, which makes the analysis straightforward: bin nights by mean overnight temperature in 2&deg;C steps, compute event rate per bin, and test for a lagged relationship &mdash; activity often follows a temperature drop by one to three days as pests move indoors. Door-contact correlation is even more direct: window each dock-open event and measure event rate inside it against the site baseline.</p>
+
+    <p>The outputs read like this, and they are what makes the product worth paying for:</p>
+    <div class="grid g2" style="margin:18px 0">
+      <div class="stat"><span class="n">2.4&times;</span><span class="l">Rodent event rate when overnight minimum falls below 18&nbsp;&deg;C, site 041, 62 nights observed</span></div>
+      <div class="stat"><span class="n">83%</span><span class="l">Of dock-zone rodent events begin within 20 minutes of a dock-door open event</span></div>
+    </div>
+    <p>The second finding is the kind of thing that changes client behaviour: it converts "you have rats" into "your rats arrive with the 22:15 delivery, and the door stands open for eleven minutes".</p>
+
+    <div class="callout note">
+      <p class="kicker">Statistical discipline</p>
+      <p>Correlations are surfaced as associations, never as causes, and only once a minimum sample is met &mdash; at least 30 observed nights and 20 events, with the confidence interval shown. A dashboard that reports a spurious correlation from four nights of data will be believed, acted on, and then disbelieved permanently.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="alerts">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">09</span><h2>Alerting without fatigue</h2></div>
+    <div class="rule"></div>
+    <p class="lede">The brief asks for three alert types. The engineering difficulty is not producing them &mdash; it is producing few enough of them that someone still reads the fourth one.</p>
+
+    <div class="grid g3" style="margin:22px 0">
+      <div class="card"><p class="kicker">Type 1</p><h4>Real-time detection</h4><p>Fires on a validated high-confidence event in a zone configured for immediate notification. Carries the annotated keyframe inline so the recipient decides in two seconds.</p></div>
+      <div class="card"><p class="kicker">Type 2</p><h4>Repeated activity</h4><p>Fires when the repeat-visit cluster from &sect;7 crosses a threshold &mdash; same zone, same species, consistent hour, N nights. This is the alert that drives inspections.</p></div>
+      <div class="card"><p class="kicker">Type 3</p><h4>High activity</h4><p>Fires when a zone's uptime-normalised rate exceeds its own rolling baseline by a z-score threshold. Site-relative, so a naturally busy waste bay does not alert nightly.</p></div>
+    </div>
+
+    <h3>The five mechanisms that keep the volume sane</h3>
+    <ul>
+      <li><strong>Confidence tiering.</strong> Only high-confidence events push. Medium-confidence events appear in the review feed without notifying anyone. Nothing uncertain ever interrupts a person &mdash; it waits to be looked at.</li>
+      <li><strong>Cooldown.</strong> Per camera and species, typically 15 minutes. One rat crossing a dock six times is one alert, not six.</li>
+      <li><strong>Digest rollover.</strong> Past a threshold of alerts per hour, the channel switches automatically to an hourly digest and says so. A genuine infestation should not produce a hundred notifications.</li>
+      <li><strong>Routing and quiet hours.</strong> Per site, per role, per zone. The night supervisor gets dock alerts at 03:00; the account manager gets the morning summary.</li>
+      <li><strong>Escalation.</strong> An unacknowledged critical alert escalates &mdash; push, then SMS, then a call to the site contact after 30 minutes. Acknowledgement is one tap and is recorded against the event.</li>
+    </ul>
+
+    <p><strong>Channels.</strong> WhatsApp Business API as the primary channel for Indian deployments, with SMS fallback, email for digests and reports, and web/mobile push for logged-in users. Alert payloads carry a deep link into the event so the recipient lands on the clip, not on a dashboard home page.</p>
+
+    <div class="callout">
+      <p class="kicker">Design target</p>
+      <p>Fewer than <strong>0.5 false alerts per camera-night</strong> at the operating point. On a 16-camera site that is eight false alerts a night at the ceiling, which is the outer edge of what a client will tolerate before they mute the channel. This number, not raw model precision, is the metric to run the project against.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="evidence">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">10</span><h2>Evidence, privacy and retention</h2></div>
+    <div class="rule"></div>
+    <p class="lede">The evidence output is not just a convenience feature &mdash; in food processing it becomes an audit artefact, and in hospitals and homes it becomes a regulated one. Both pull in the same direction: capture it properly, prove it wasn't altered, and blur the people.</p>
+
+    <h3>What an evidence package contains</h3>
+    <ul class="tight">
+      <li>Clip: 8&nbsp;s pre-roll + track duration + 5&nbsp;s post-roll, H.264, from the ring buffer</li>
+      <li>Annotated keyframe at peak detection confidence</li>
+      <li>Trajectory polyline in image and floor-plane coordinates</li>
+      <li>Site, camera, zone, timestamp (UTC + site-local), species with confidence, model version</li>
+      <li>SHA-256 content hash computed at creation on the edge node, stored in the event record</li>
+    </ul>
+
+    <p>Overlays are stored as sidecar JSON and rendered on demand rather than burned into the video, with the clean original retained. A burned-in box is an assertion the client cannot independently check; a clean clip plus a separately hashed overlay is evidence they can. Object storage runs with versioning and object-lock so a clip cannot be silently replaced, which is what makes the package defensible in an FSSAI, BRC or AIB audit.</p>
+
+    <h3>Privacy</h3>
+    <p>Three of the eight target industries put the system in front of patients, residents and diners. The controls are not optional:</p>
+    <ul class="tight">
+      <li><strong>Face blur by default</strong> on any clip leaving the edge node, driven by the human class from &sect;5; full-body blur configurable per site for hospital and residential deployments.</li>
+      <li><strong>Retention</strong> defaulting to 90 days for media and 24 months for metadata, per-site overridable, enforced by lifecycle policy rather than by a cron job someone can forget to fix.</li>
+      <li><strong>Role-based access</strong> with an audit log recording who viewed which clip and when &mdash; hospitals will ask for this, and it is far cheaper to build in than to retrofit.</li>
+      <li><strong>DPDP Act 2023 alignment</strong>: purpose limitation, notice and signage obligations at monitored premises, defined data-fiduciary responsibilities, and a documented deletion path. Worth a short legal review before the first hospital deployment rather than after.</li>
+      <li><strong>On-premises deployment option</strong> for clients whose policy forbids video leaving the building &mdash; the same container set, no cloud dependency.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="models">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">11</span><h2>Model strategy and the learning loop</h2></div>
+    <div class="rule"></div>
+    <p class="lede">This is the highest-risk part of the programme, because on day one there is no training data. The plan turns the pilot itself into the data factory, and makes one UI control &mdash; the verify button &mdash; the mechanism by which the system gets better.</p>
+  </div>
+
+  <div class="bleed">
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 940 300" role="img" aria-label="Event lifecycle: motion candidate becomes detection, track, validated event, incident and alert; the operator's confirm, reject or reclassify verdict feeds a labelled example into the training set, which produces a new model release that returns to the detection stage." style="color:var(--ink-2)">
+          <defs>
+            <marker id="ah2" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="currentColor"/></marker>
+            <marker id="ah2a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="var(--accent)"/></marker>
+          </defs>
+
+          <text x="12" y="18" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--muted)">FORWARD PATH · ON THE EDGE, THEN IN THE CLOUD</text>
+
+          <g>
+            <rect x="12" y="34" width="118" height="46" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+            <text x="24" y="55" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Motion</text>
+            <text x="24" y="70" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">candidate</text>
+
+            <rect x="158" y="34" width="118" height="46" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+            <text x="170" y="55" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Detection</text>
+            <text x="170" y="70" class="svg-mono" font-size="9.5" fill="var(--muted)">per tile</text>
+
+            <rect x="304" y="34" width="118" height="46" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+            <text x="316" y="55" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Track</text>
+            <text x="316" y="70" class="svg-mono" font-size="9.5" fill="var(--muted)">persistent ID</text>
+
+            <rect x="450" y="34" width="118" height="46" rx="3" class="svg-fill-surface" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="462" y="55" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Validated</text>
+            <text x="462" y="70" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">event</text>
+
+            <rect x="596" y="34" width="118" height="46" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+            <text x="608" y="55" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Incident</text>
+            <text x="608" y="70" class="svg-mono" font-size="9.5" fill="var(--muted)">cross-camera</text>
+
+            <rect x="742" y="34" width="118" height="46" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+            <text x="754" y="55" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Alert</text>
+            <text x="754" y="70" class="svg-mono" font-size="9.5" fill="var(--muted)">rules + cooldown</text>
+          </g>
+
+          <g stroke="currentColor" marker-end="url(#ah2)">
+            <line x1="130" y1="57" x2="152" y2="57"/>
+            <line x1="276" y1="57" x2="298" y2="57"/>
+            <line x1="422" y1="57" x2="444" y2="57"/>
+            <line x1="568" y1="57" x2="590" y2="57"/>
+            <line x1="714" y1="57" x2="736" y2="57"/>
+          </g>
+          <text x="428" y="26" class="svg-mono" font-size="9.5" fill="var(--muted)">plausibility gate</text>
+
+          <!-- drops -->
+          <g stroke="var(--muted)" stroke-dasharray="3 3" marker-end="url(#ah2)">
+            <line x1="363" y1="80" x2="363" y2="104"/>
+          </g>
+          <text x="372" y="98" class="svg-mono" font-size="9.5" fill="var(--muted)">93% of tracks discarded silently — never reach a person</text>
+
+          <!-- operator -->
+          <rect x="596" y="140" width="264" height="56" rx="3" class="svg-fill-surface" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="608" y="161" class="svg-disp" font-size="12" font-weight="700" fill="var(--accent)">Operator verdict</text>
+          <text x="608" y="181" class="svg-mono" font-size="10" fill="currentColor">Confirm · Reject · Reclassify — one tap</text>
+          <line x1="801" y1="80" x2="801" y2="134" stroke="currentColor" marker-end="url(#ah2)"/>
+
+          <!-- return path -->
+          <text x="12" y="132" class="svg-mono" font-size="10.5" letter-spacing="1.2" fill="var(--accent)">RETURN PATH · THIS IS THE PRODUCT</text>
+
+          <rect x="304" y="140" width="140" height="56" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="316" y="161" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Labelled example</text>
+          <text x="316" y="180" class="svg-mono" font-size="9.5" fill="var(--muted)">+ hard negatives</text>
+
+          <rect x="158" y="140" width="118" height="56" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="170" y="161" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Training set</text>
+          <text x="170" y="180" class="svg-mono" font-size="9.5" fill="var(--muted)">versioned · DVC</text>
+
+          <rect x="12" y="140" width="118" height="56" rx="3" class="svg-fill-2" stroke="var(--line-strong)"/>
+          <text x="24" y="161" class="svg-disp" font-size="11.5" font-weight="650" fill="currentColor">Model release</text>
+          <text x="24" y="180" class="svg-mono" font-size="9.5" fill="var(--muted)">shadow → staged</text>
+
+          <g stroke="var(--accent)" marker-end="url(#ah2a)">
+            <line x1="590" y1="168" x2="450" y2="168"/>
+            <line x1="298" y1="168" x2="282" y2="168"/>
+            <line x1="152" y1="168" x2="136" y2="168"/>
+          </g>
+
+          <path d="M 71 196 L 71 246 L 217 246 L 217 224" fill="none" stroke="var(--accent)" stroke-dasharray="4 3" marker-end="url(#ah2a)"/>
+          <text x="80" y="264" class="svg-mono" font-size="10" fill="var(--accent)">weekly retrain, evaluated per site before rollout</text>
+
+          <path d="M 71 196 L 71 286 L 217 286" fill="none" stroke="none"/>
+          <line x1="217" y1="224" x2="217" y2="200" stroke="var(--accent)" stroke-dasharray="4 3"/>
+
+          <!-- back to detection -->
+          <path d="M 460 246 L 460 220" fill="none" stroke="none"/>
+          <path d="M 71 246 L 460 246" fill="none" stroke="var(--accent)" stroke-dasharray="4 3"/>
+          <line x1="460" y1="246" x2="460" y2="212" stroke="var(--accent)" stroke-dasharray="4 3"/>
+          <line x1="217" y1="90" x2="217" y2="82" stroke="var(--accent)" marker-end="url(#ah2a)"/>
+          <path d="M 460 212 L 460 96 L 217 96 L 217 90" fill="none" stroke="var(--accent)" stroke-dasharray="4 3"/>
+
+          <line x1="12" y1="288" x2="928" y2="288" stroke="var(--line)"/>
+        </svg>
+      </div>
+      <figcaption><b>Figure 5 &mdash; The verify button is the training pipeline.</b> The forward path is unremarkable; the dashed accent path is what makes the system improve after delivery. Every operator verdict becomes a labelled example, rejections become the hard negatives that are worth more than positives, and weekly retraining closes the loop. Build the return path in Phase 1, not as a later enhancement &mdash; a system without it is frozen at whatever accuracy it shipped with.</figcaption>
+    </figure>
+  </div>
+
+  <div class="wrap">
+    <h3>Solving the cold start</h3>
+    <ol>
+      <li><strong>Bootstrap (weeks 0&ndash;4).</strong> MegaDetector v6 as a class-agnostic animal proposal generator &mdash; trained on camera-trap imagery, handles infrared, and generalises far better than a COCO model on this domain. It emits only <code>animal</code>&nbsp;/&nbsp;<code>person</code>&nbsp;/&nbsp;<code>vehicle</code> and cannot tell a rat from a cat; its job is to turn "all motion" into "mostly animals" so the labelling queue is several times denser. Supplement with public data: LILA BC camera-trap collections, iNaturalist, COCO for dog/cat/bird, and public rodent sets. The result is a v0 that is not production-grade and is not meant to be.</li>
+      <li><strong>What does not exist, and is worth not searching for twice.</strong> There is no public pretrained rodent detector worth building on. The Roboflow Universe rat and pest sets are a few hundred images each, mostly daylight or clip-art &mdash; useful later as supplementary training data, not usable as a model. The academic rodent-YOLO work (Rat-YOLO, Cosevare, open-field behaviour trackers) is trained on laboratory arenas: overhead camera, white floor, single animal, controlled lighting, and weights largely unpublished. None of it transfers to a warehouse at 2&nbsp;a.m.</li>
+      <li><strong>Harvest (weeks 2&ndash;12).</strong> Deploy v0 at pilot sites in <em>collect-only</em> mode with a deliberately low threshold. It over-triggers on purpose, nothing is sent to a client, and every candidate goes into the labelling queue. The pilot's real deliverable is the dataset.</li>
+      <li><strong>Label.</strong> CVAT or Label Studio, two annotators, 5% overlap sample for agreement measurement. Target 8&ndash;15k labelled instances per major class for a solid v1 &mdash; rodents will and should dominate.</li>
+      <li><strong>Active learning.</strong> Prioritise the labelling queue by model uncertainty, disagreement between successive model versions, and above all by operator-marked false positives, which are the highest-information examples in the system.</li>
+      <li><strong>Per-site calibration.</strong> After roughly two weeks of verified events, each site gets its own confidence thresholds fitted to hit a target precision. Sites differ enormously in lighting, clutter and camera quality; a single global threshold is wrong nearly everywhere.</li>
+    </ol>
+
+    <div class="callout risk">
+      <p class="kicker">Licensing &mdash; a deployment boundary, not just a model choice</p>
+      <p>The Ultralytics YOLO family (YOLOv8/YOLO11) is <strong>AGPL-3.0</strong>. Shipping it inside a commercial product sold to clients triggers the network-copyleft obligation unless an Ultralytics Enterprise licence is purchased. The alternatives are genuinely good: <strong>RT-DETRv2</strong> and <strong>D-FINE</strong> (Apache-2.0) are transformer detectors with comparable or better small-object accuracy, and <strong>YOLOX</strong> (Apache-2.0) is a proven permissive convolutional option.</p>
+      <p>The bootstrap tooling carries the same constraint, and this is the part that is easy to miss: <strong>PytorchWildlife depends on <code>ultralytics</code> and <code>yolov5</code>, both AGPL-3.0, whichever MegaDetector weights are selected.</strong> Choosing a permissively-licensed checkpoint does not make the installed stack permissive.</p>
+      <p>That is workable, because it defines a boundary rather than a blocker. Running MegaDetector on our own machines to sort our own collected footage is <em>internal use</em> &mdash; copyleft triggers on distribution and on network interaction with third parties, and a labelling pipeline is neither. What must never happen is that stack reaching an edge node at a client site. The production detector is a separately trained model exported to ONNX and served through ONNX Runtime or TensorRT, with none of it in the image. Because stage C sits behind a detector interface, this is a packaging rule rather than a code change &mdash; but it has to be written down before someone builds the edge image.</p>
+    </div>
+
+    <h3>Evaluation that reflects the job</h3>
+    <p>Standard mAP is necessary but not sufficient &mdash; it says nothing about whether a client will keep the system switched on. Three operational metrics govern release:</p>
+    <div class="grid g3" style="margin:18px 0">
+      <div class="stat"><span class="n">&lt; 0.5</span><span class="l">False alerts per camera-night at the operating point</span></div>
+      <div class="stat"><span class="n">&ge; 85%</span><span class="l">Recall on rodents in the per-site held-out night set</span></div>
+      <div class="stat"><span class="n">&ge; 90%</span><span class="l">Detection rate on staged validation runs</span></div>
+    </div>
+    <p>Staged validation matters because recall on a labelled test set only measures what was labelled. Placing a known attractant in a known location and confirming the system reports it &mdash; alongside correlation with bait-take data from the technicians' own rounds &mdash; measures what was <em>missed</em>. Every site gets a staged run at commissioning and quarterly thereafter.</p>
+  </div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="data">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">12</span><h2>Data model</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Fifteen core entities. The distinction that carries the most weight downstream is <em>detection &rarr; track &rarr; event &rarr; incident</em>: analytics query incidents, evidence hangs off events, and detections exist mainly to be trained on.</p>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Entity</th><th>Key fields</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Tenant</td><td>id, name, retention_policy, branding</td><td>Row-level tenancy; one client of Express Pesticides</td></tr>
+          <tr><td>Site</td><td>id, tenant_id, address, timezone, floor_plan_ref, industry</td><td>Timezone lives here, not on the user</td></tr>
+          <tr><td>Zone</td><td>id, site_id, camera_id, polygon, type, is_physical_edge[]</td><td>The edge-type flags are what make entry-point inference trustworthy</td></tr>
+          <tr><td>Camera</td><td>id, site_id, rtsp_uri, resolution, lens_mm, mount_height, homography, night_shutter, status</td><td>Survey findings from &sect;2 live here and drive expected-range warnings</td></tr>
+          <tr><td>EdgeNode</td><td>id, site_id, hw_class, model_version, last_seen, spool_depth</td><td>spool_depth is the offline-backlog health signal</td></tr>
+          <tr><td>CameraUptime</td><td>camera_id, window, observed_seconds</td><td>Hypertable; the denominator for every normalised metric</td></tr>
+          <tr><td>Sensor / Reading</td><td>sensor_id, type, zone_id &middot; ts, value</td><td>Timescale hypertable, 5-minute rollups</td></tr>
+          <tr><td>Detection</td><td>id, track_id, ts, bbox, class_l1/l2/l3, conf, tile_ref</td><td>Retained on edge and sampled to cloud; primarily training material</td></tr>
+          <tr><td>Track</td><td>id, camera_id, start_ts, end_ts, polyline_img, polyline_floor, origin_pt, terminus_pt, features</td><td>origin_pt drives &sect;7 entry-point clustering</td></tr>
+          <tr><td>Event</td><td>id, track_id, site_id, camera_id, zone_id, ts, species_l2, species_l3, conf, duration_s, heading, clip_id, keyframe_id, model_version</td><td>The unit of evidence</td></tr>
+          <tr><td>Incident</td><td>id, site_id, event_ids[], start_ts, end_ts, zones[], species</td><td>The unit of counting &mdash; all analytics query here</td></tr>
+          <tr><td>Alert</td><td>id, incident_id, rule_id, channel, sent_at, acked_at, acked_by, escalation_state</td><td>Acknowledgement is recorded, not assumed</td></tr>
+          <tr><td>Verification</td><td>id, event_id, verdict, corrected_class, user_id, ts</td><td>Feeds the training set; the loop in Figure 5</td></tr>
+          <tr><td>Clip</td><td>id, object_key, sha256, duration_s, blurred, expires_at</td><td>Hash at creation on the edge; lifecycle-enforced expiry</td></tr>
+          <tr><td>Model / Deployment</td><td>id, family, version, metrics, license &middot; node_id, rolled_out_at, mode</td><td>mode covers shadow, staged and live &mdash; every event records the model that produced it</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <p>Postgres with TimescaleDB carries events, incidents, tracks and sensor readings as hypertables partitioned by time; continuous aggregates precompute the hourly and daily rollups that dashboards and reports read, so a monthly heat map is a cheap query rather than a scan of a hundred million rows. Media stays in object storage keyed from the <code>Clip</code> row &mdash; never in the database.</p>
+  </div>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="stack">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">13</span><h2>Stack and hardware sizing</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Chosen for one deployable team to build and operate, with Python end to end so the ML and the backend share a language, and with nothing that forces a cloud dependency the on-prem clients cannot accept.</p>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Concern</th><th>Choice</th><th>Why this one</th></tr></thead>
+        <tbody>
+          <tr><td>Edge video pipeline</td><td>GStreamer + DeepStream (fallback: PyAV + TensorRT)</td><td>Hardware decode and batched inference across cameras on Jetson; the plain-Python path is the pilot escape hatch if DeepStream integration costs too much time</td></tr>
+          <tr><td>Detector</td><td>RT-DETRv2 or D-FINE, TensorRT INT8</td><td>Apache-2.0, strong small-object performance &mdash; see the licensing note in &sect;11</td></tr>
+          <tr><td>Tracker</td><td>ByteTrack + Kalman</td><td>Associates low-confidence detections, which is the normal case here</td></tr>
+          <tr><td>Edge event bus</td><td>MQTT (Mosquitto) &rarr; TLS uplink</td><td>Lightweight, QoS-1, survives flaky links; already the lingua franca of the IoT sensors</td></tr>
+          <tr><td>Backend</td><td>Python + FastAPI</td><td>Same language as the ML stack; async suits the ingest workload</td></tr>
+          <tr><td>Database</td><td>PostgreSQL + TimescaleDB</td><td>Time-series events and sensor readings with real SQL and continuous aggregates; one database instead of three</td></tr>
+          <tr><td>Object storage</td><td>MinIO (on-prem) / S3 (cloud)</td><td>Same API both ways &mdash; the on-prem requirement is satisfied by configuration, not a rewrite</td></tr>
+          <tr><td>Queue / cache</td><td>Redis + arq</td><td>Report generation, clip processing, retraining triggers</td></tr>
+          <tr><td>Live video to browser</td><td>MediaMTX (RTSP &rarr; WebRTC)</td><td>Sub-second live wall without re-encoding; HLS fallback for poor networks</td></tr>
+          <tr><td>Frontend</td><td>React + TypeScript</td><td>Live wall, event feed with verify controls, zone editor, heat maps, reports</td></tr>
+          <tr><td>Reports</td><td>WeasyPrint</td><td>HTML templates to PDF, so report layout and web layout share one source</td></tr>
+          <tr><td>Labelling / datasets</td><td>CVAT or Label Studio + DVC</td><td>Versioned datasets are what make model regressions diagnosable</td></tr>
+          <tr><td>Observability</td><td>Prometheus + Grafana + Loki</td><td>Per-node health, camera uptime, spool depth, inference latency, model drift</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h3>Edge hardware tiers</h3>
+    <p>Sizing assumes the gated cascade from &sect;4 &mdash; roughly 9 tiles per second average per camera with burst headroom. Without gating, divide every camera count by four.</p>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Tier</th><th>Cameras</th><th>Hardware</th><th>Typical site</th></tr></thead>
+        <tbody>
+          <tr><td>S</td><td class="num">2&ndash;6</td><td>Jetson Orin Nano 8 GB, 512 GB NVMe</td><td>Restaurant, clinic, small residential block</td></tr>
+          <tr><td>M</td><td class="num">8&ndash;16</td><td>Jetson Orin NX 16 GB, 1 TB NVMe</td><td>Warehouse, hotel, small factory</td></tr>
+          <tr><td>L</td><td class="num">24&ndash;48</td><td>2&ndash;3&times; Orin NX nodes, or x86 + RTX 4000 Ada</td><td>Food plant, large logistics hub</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-family:var(--font-display);font-size:13px;color:var(--muted);margin:-8px 0 0;padding:0 2px">For tier L, prefer several Orin NX nodes over one large x86 box: it is cheaper per camera, and a hardware failure takes out a third of the site rather than all of it.</p>
+  </div>
+
+  <div class="wrap">
+    <p><strong>Server side</strong> starts deliberately small &mdash; a single VM (8 vCPU, 32 GB RAM, 2 TB) running the container set behind a reverse proxy handles the first several dozen sites comfortably, because the heavy work already happened at the edge. Kubernetes is a Phase 4 conversation, worth having somewhere past fifty sites and not before.</p>
+  </div>
+</section>
+
+<!-- ============ 14 ============ -->
+<section id="roadmap">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">14</span><h2>Roadmap</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Roughly nine months to a sellable v1, sequenced so that the riskiest unknown &mdash; whether the client's cameras can see pests at all &mdash; is resolved in month one, before significant money is committed.</p>
+
+    <div class="phase">
+      <div class="phase-when"><b>PHASE 0</b>4 weeks</div>
+      <div>
+        <h4>Survey and feasibility</h4>
+        <p>Camera audit at two or three representative sites across different industries, overnight footage capture, shutter and IR assessment, network survey, floor plans and zone capture.</p>
+        <ul class="tight">
+          <li>Per-camera usability grading and supplementary-camera bill of materials</li>
+          <li>Validated camera specification for future installs</li>
+          <li>Go/no-go per site, with cost to remediate</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-when"><b>PHASE 1</b>8&ndash;10 weeks</div>
+      <div>
+        <h4>Data engine and rodent MVP</h4>
+        <p>Edge nodes deployed in collect-only mode, labelling pipeline running, first real detector, and the event feed with verify controls &mdash; the return path in Figure 5 ships here, not later.</p>
+        <ul class="tight">
+          <li>Motion gate, tiled inference, basic tracking, event store</li>
+          <li>Rodent and human classes; 8&ndash;15k labelled instances</li>
+          <li><strong>Exit criteria:</strong> &ge;85% rodent recall at &le;1 false alert per camera-night on the pilot site</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-when"><b>PHASE 2</b>10&ndash;12 weeks</div>
+      <div>
+        <h4>Full detection pipeline and alerting</h4>
+        <p>The system becomes something a client uses daily rather than something the team evaluates.</p>
+        <ul class="tight">
+          <li>Track validation classifier, cross-camera association, zones and homography</li>
+          <li>Remaining L2 classes: bird, reptile, carnivore, cockroach</li>
+          <li>Evidence packages with privacy blurring; alerting with cooldown, tiering and escalation; WhatsApp channel</li>
+          <li>Live wall, daily reports, per-site threshold calibration</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-when"><b>PHASE 3</b>8&ndash;10 weeks</div>
+      <div>
+        <h4>Analytics, IoT and recommendations</h4>
+        <p>The layer that makes the product worth a recurring fee rather than a one-off install.</p>
+        <ul class="tight">
+          <li>Heat maps, entry-point inference, repeat-visit clustering, period comparison</li>
+          <li>LoRaWAN sensor fleet, temperature and door-contact correlation</li>
+          <li>ILT glue-board counting and the flying insect activity index</li>
+          <li>Weekly and monthly reports, IPM recommendation engine built with Express technicians</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-when"><b>PHASE 4</b>ongoing</div>
+      <div>
+        <h4>Scale and commercial surface</h4>
+        <ul class="tight">
+          <li>Multi-tenant hardening, client self-service, per-client branding</li>
+          <li>Mobile app for field technicians, service-visit verification</li>
+          <li>Drift monitoring, automated per-site recalibration</li>
+          <li>Integration with Express Pesticides' existing service scheduling / CRM</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 15 ============ -->
+<section id="risk">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">15</span><h2>Risk register</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Ordered by expected damage. The first four are the ones that decide whether this programme succeeds; the rest are manageable with attention.</p>
+  </div>
+
+  <div class="bleed">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>Existing cameras cannot resolve pests</td><td><span class="tag hi">Critical</span></td><td>Phase 0 survey as a funding gate; supplementary pest-view camera BOM priced before commitment; per-camera expected-range warnings built into the product</td></tr>
+          <tr><td>False-alert fatigue kills adoption</td><td><span class="tag hi">Critical</span></td><td>Track-level validation, plausibility classifier, confidence tiering, cooldowns, per-site calibration; run the project against &lt;0.5 false alerts per camera-night, not against mAP</td></tr>
+          <tr><td>No training data at start</td><td><span class="tag hi">Critical</span></td><td>MegaDetector bootstrap, collect-only pilot phase, active learning prioritised by operator rejections; the pilot is scoped as a data-collection exercise, not a demo</td></tr>
+          <tr><td>Night motion blur destroys targets</td><td><span class="tag hi">High</span></td><td>1/250 s shutter floor as a hard commissioning requirement; IR illuminator audit; reject cameras that cannot meet it rather than shipping bad detections from them</td></tr>
+          <tr><td>Flying insect expectations unmet</td><td><span class="tag hi">High</span></td><td>Reframe to activity index plus instrumented glue-board counting <em>in the contract</em>, before build (&sect;6)</td></tr>
+          <tr><td>Model licensing (AGPL) blocks commercial sale</td><td><span class="tag md">Medium</span></td><td>Standardise on Apache-2.0 detector families, or purchase an enterprise licence with the cost carried in the business case</td></tr>
+          <tr><td>Site network outages</td><td><span class="tag md">Medium</span></td><td>Edge-autonomous architecture; local spool with monitored depth; clip upload deferrable to off-peak windows</td></tr>
+          <tr><td>Camera tamper, lens fouling, spider webs</td><td><span class="tag md">Medium</span></td><td>Laplacian-variance tamper detection raising maintenance alerts; uptime normalisation so a blinded camera reads as no-coverage rather than no-pests</td></tr>
+          <tr><td>Privacy / regulatory exposure in hospitals and homes</td><td><span class="tag md">Medium</span></td><td>Default face blurring, RBAC with view auditing, enforced retention, on-prem deployment option, DPDP review before first hospital site</td></tr>
+          <tr><td>Species scope creep</td><td><span class="tag lo">Low</span></td><td>Hierarchical taxonomy; commit contractually to L2 accuracy and treat L3 as best-effort with suppression</td></tr>
+          <tr><td>Edge hardware supply and cost</td><td><span class="tag lo">Low</span></td><td>Two validated hardware paths (Jetson and x86+GPU); the pipeline is ONNX/TensorRT portable between them</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 16 ============ -->
+<section id="open">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">16</span><h2>Open questions</h2></div>
+    <div class="rule"></div>
+    <p class="lede">Seven answers that would sharpen this architecture. Four of them change real decisions; the architecture proceeds on the stated assumption in the meantime.</p>
+
+    <h3>Changes the architecture</h3>
+    <ol>
+      <li><strong>Is ExpressVision sold to Express Pesticides' clients, or used internally by Express?</strong> Assumed multi-tenant SaaS throughout. If internal-only, the tenancy layer, client branding and client-facing report surface come out and roughly six weeks come off Phase 4.</li>
+      <li><strong>Will any client require on-premises deployment with no video leaving the building?</strong> Assumed yes for at least hospitals and some food processors, which is why L3 is containerised with no managed-cloud dependency. If never required, the server side simplifies and managed services become available.</li>
+      <li><strong>What is the budget for supplementary cameras per site?</strong> This determines whether Phase 0 findings lead to remediation or to reduced coverage expectations, and it is the difference between a system that works and one that is blamed for missing what it could never see.</li>
+      <li><strong>Pilot scale &mdash; how many sites and cameras, across which industries?</strong> Drives edge hardware procurement and, more importantly, how fast the training set accumulates. Two industries at three sites is the minimum useful spread.</li>
+    </ol>
+
+    <h3>Useful to know early</h3>
+    <ol start="5">
+      <li><strong>Existing NVR makes and models, and whether RTSP/ONVIF access is enabled.</strong> Some consumer and cloud-locked NVRs do not expose usable streams, which turns a software integration into a hardware replacement.</li>
+      <li><strong>Is there an existing pest-control CRM or service-scheduling system to integrate with?</strong> Determines whether recommendations flow into real work orders in Phase 4 or stay in a PDF.</li>
+      <li><strong>Which sites already run insect light traps or bait stations on a documented schedule?</strong> Those are the fastest path to the instrumented counting in &sect;6 and to validation data from technicians' existing rounds.</li>
+    </ol>
+
+    <div class="callout">
+      <p class="kicker">Recommended next step</p>
+      <p>Commission Phase 0 on two contrasting sites &mdash; ideally one food-processing or warehouse site and one hospitality or hospital site. Four weeks and a small budget resolve the largest technical unknown in the programme, produce a camera specification that everything downstream depends on, and generate the first overnight footage that the training pipeline needs. Every other decision in this document is cheaper to make afterwards.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+  var map = {};
+  links.forEach(function(a){
+    var el = document.querySelector(a.getAttribute('href'));
+    if (el) map[el.id] = a;
+  });
+  var sections = Object.keys(map).map(function(id){ return document.getElementById(id); });
+  if (!('IntersectionObserver' in window) || !sections.length) return;
+  var visible = {};
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ visible[e.target.id] = e.isIntersecting; });
+    var current = null;
+    for (var i = 0; i < sections.length; i++){
+      if (visible[sections[i].id]) { current = sections[i].id; break; }
+    }
+    if (!current) return;
+    links.forEach(function(a){ a.classList.remove('on'); });
+    map[current].classList.add('on');
+  }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+  sections.forEach(function(s){ io.observe(s); });
+})();
+</script>

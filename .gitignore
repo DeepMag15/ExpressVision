@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Data — never commit footage, clips or databases
+data/
+out/
+*.mp4
+*.avi
+*.mkv
+*.db
+*.sqlite
+*.sqlite3
+*.pt
+*.onnx
+*.engine
+
+# Local config and credentials — RTSP passwords, ROBOFLOW_API_KEY, etc.
+# Keys belong in environment variables, never in a tracked file.
+cameras.local.yaml
+.env
+.env.*
+*.key
+secrets.*
+
+# OS
+Thumbs.db
+desktop.ini

@@ -1,0 +1,480 @@
+<title>How ExpressVision Works</title>
+<style>
+:root{
+  --ground:#F1F4F0;
+  --surface:#FFFFFF;
+  --surface-2:#E5EAE3;
+  --ink:#131A18;
+  --ink-2:#3B4642;
+  --muted:#67736E;
+  --line:#D0D8CD;
+  --line-strong:#A9B4A6;
+  --accent:#B06A12;
+  --accent-soft:#F6E6C9;
+  --good:#2E6E5C;
+  --good-soft:#DCEAE4;
+  --bad:#A83C2C;
+  --bad-soft:#F6DED8;
+  --shadow:0 1px 2px rgba(19,26,24,.05),0 8px 24px -14px rgba(19,26,24,.25);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1312;
+    --surface:#151D1B;
+    --surface-2:#1D2624;
+    --ink:#E4EAE5;
+    --ink-2:#B6C1BB;
+    --muted:#828F89;
+    --line:#28322F;
+    --line-strong:#3D4844;
+    --accent:#E5A64E;
+    --accent-soft:#352A16;
+    --good:#63AC97;
+    --good-soft:#162E28;
+    --bad:#DD7A66;
+    --bad-soft:#3A221D;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1312;
+  --surface:#151D1B;
+  --surface-2:#1D2624;
+  --ink:#E4EAE5;
+  --ink-2:#B6C1BB;
+  --muted:#828F89;
+  --line:#28322F;
+  --line-strong:#3D4844;
+  --accent:#E5A64E;
+  --accent-soft:#352A16;
+  --good:#63AC97;
+  --good-soft:#162E28;
+  --bad:#DD7A66;
+  --bad-soft:#3A221D;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:"Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,
+    "Helvetica Neue",Arial,sans-serif;
+  font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased;
+}
+.page{max-width:1080px;margin:0 auto;padding:0 28px 100px}
+.col{max-width:62ch}
+
+h1{
+  font-weight:700;font-size:clamp(32px,5vw,50px);line-height:1.05;
+  letter-spacing:-.03em;margin:0 0 20px;text-wrap:balance;max-width:16ch;
+}
+h2{
+  font-weight:700;font-size:clamp(23px,3vw,29px);line-height:1.2;
+  letter-spacing:-.02em;margin:0;text-wrap:balance;
+}
+h3{font-weight:650;font-size:19px;letter-spacing:-.01em;margin:30px 0 6px}
+p{margin:0 0 18px;color:var(--ink-2)}
+strong{color:var(--ink);font-weight:650}
+
+header{padding:76px 0 34px}
+.eyebrow{
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 20px;
+}
+.lede{font-size:21px;line-height:1.55;color:var(--ink-2);max-width:52ch;margin:0}
+.disclaimer{
+  margin-top:32px;padding:13px 18px;border-radius:5px;
+  background:var(--surface-2);border:1px solid var(--line);
+  font-size:14.5px;color:var(--muted);max-width:60ch;
+}
+
+section{padding-top:62px}
+.head{display:flex;align-items:baseline;gap:16px;margin-bottom:20px}
+.num{
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:13px;color:var(--accent);flex:none;padding-top:6px;
+}
+
+figure{margin:34px 0;padding:0}
+.figbox{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:26px 24px 20px;box-shadow:var(--shadow);overflow-x:auto;
+}
+figure svg{display:block;width:100%;height:auto;max-width:100%}
+figcaption{font-size:15px;line-height:1.5;color:var(--muted);margin-top:14px;max-width:70ch}
+figcaption b{color:var(--ink-2);font-weight:650}
+
+.steps{display:flex;flex-direction:column;gap:14px;margin:28px 0}
+.step{
+  display:grid;grid-template-columns:52px minmax(0,1fr);gap:18px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:8px;padding:20px 22px;box-shadow:var(--shadow);
+}
+.step-n{
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:22px;font-weight:600;color:var(--accent);line-height:1.1;
+}
+.step h3{margin:0 0 5px;font-size:18px}
+.step p{margin:0;font-size:16.5px}
+.step .aside{
+  margin-top:9px;font-size:14.5px;color:var(--muted);
+  padding-left:14px;border-left:2px solid var(--line-strong);
+}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:18px 22px;border-radius:0 6px 6px 0;margin:28px 0;
+}
+.callout p{margin:0;color:var(--ink-2)}
+.callout p+p{margin-top:12px}
+
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:26px 0}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:18px 20px;box-shadow:var(--shadow);
+}
+.card h3{margin:0 0 6px;font-size:16.5px}
+.card p{margin:0;font-size:15.5px}
+
+.status{display:flex;flex-direction:column;gap:9px;margin:26px 0}
+.row{
+  display:flex;align-items:center;gap:14px;padding:13px 18px;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+}
+.pill{
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:10.5px;letter-spacing:.07em;padding:3px 9px;border-radius:20px;
+  flex:none;font-weight:600;text-transform:uppercase;
+}
+.pill.done{background:var(--good-soft);color:var(--good)}
+.pill.wait{background:var(--bad-soft);color:var(--bad)}
+.row span:last-child{font-size:16px;color:var(--ink-2)}
+
+footer{
+  margin-top:76px;padding-top:26px;border-top:1px solid var(--line);
+  font-size:15px;color:var(--muted);
+}
+footer a{color:var(--accent)}
+
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:0 20px 70px}
+  header{padding-top:48px}
+  .step{grid-template-columns:38px minmax(0,1fr);gap:12px}
+  .figbox{padding:18px 14px 14px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header class="col">
+  <p class="eyebrow">ExpressVision &middot; plain-language guide</p>
+  <h1>How the pest camera system works</h1>
+  <p class="lede">No technical background needed. Six short sections and four pictures explaining what we are building and why it is put together this way.</p>
+  <div class="disclaimer">This page is for understanding only. It is not part of the software, and nothing depends on it.</div>
+</header>
+
+<!-- 1 -->
+<section>
+  <div class="col">
+    <div class="head"><span class="num">01</span><h2>The problem</h2></div>
+    <p>Rats and mice come out at night, when nobody is in the building. Most warehouses, factories and food plants already have cameras recording all night long.</p>
+    <p>But <strong>nobody watches that footage.</strong> One camera records about eight hours a night. A site with sixteen cameras produces 128 hours of video every night. Watching it is impossible.</p>
+    <p>So the recording exists, the rats are on it, and nobody finds out until someone spots droppings weeks later. By then the problem is much bigger and much more expensive.</p>
+    <p><strong>Our software watches the footage instead.</strong> It never gets bored and never sleeps.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section>
+  <div class="col">
+    <div class="head"><span class="num">02</span><h2>The one fact that shapes everything</h2></div>
+    <p>Here is the thing that makes this hard, and it is not what people expect.</p>
+    <p>In one night, a single camera records roughly <strong>650,000 individual pictures</strong>. Of those, maybe <strong>20 have a rat in them.</strong> Everything else is an empty floor.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 900 200" role="img" aria-label="A bar representing 650,000 frames recorded in one night, almost entirely empty, with four tiny marks showing the handful of frames that actually contain a rat." style="color:var(--ink-2)">
+        <text x="10" y="22" font-family="Cascadia Mono, Consolas, monospace" font-size="11.5" letter-spacing="1.4" fill="var(--muted)">ONE CAMERA · ONE NIGHT</text>
+
+        <rect x="10" y="42" width="880" height="46" rx="4" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+        <text x="24" y="71" font-size="14" fill="var(--muted)">650,000 pictures of an empty floor</text>
+
+        <g fill="var(--accent)">
+          <rect x="214" y="42" width="3" height="46"/>
+          <rect x="399" y="42" width="3" height="46"/>
+          <rect x="402" y="42" width="3" height="46"/>
+          <rect x="690" y="42" width="3" height="46"/>
+        </g>
+
+        <line x1="215" y1="94" x2="215" y2="116" stroke="var(--accent)"/>
+        <line x1="401" y1="94" x2="401" y2="116" stroke="var(--accent)"/>
+        <line x1="691" y1="94" x2="691" y2="116" stroke="var(--accent)"/>
+        <line x1="215" y1="116" x2="691" y2="116" stroke="var(--accent)"/>
+        <text x="453" y="140" text-anchor="middle" font-size="15" font-weight="650" fill="var(--accent)">about 20 pictures have a rat in them</text>
+
+        <line x1="10" y1="164" x2="890" y2="164" stroke="var(--line)"/>
+        <text x="10" y="186" font-family="Cascadia Mono, Consolas, monospace" font-size="11" fill="var(--muted)">that is 0.003% — the amber marks are drawn far wider than true scale, or you could not see them</text>
+      </svg>
+    </div>
+    <figcaption><b>Finding the needle.</b> The software's entire job is to find those 20 pictures without bothering anyone about the other 649,980. Get that wrong in one direction and you miss the rat. Get it wrong in the other and you send hundreds of false alarms, the client mutes the notifications, and the system may as well not exist.</figcaption>
+  </figure>
+
+  <div class="col">
+    <div class="callout">
+      <p><strong>Why this matters more than it sounds:</strong> it would be easy to build something that finds every rat &mdash; just alert on everything that moves. It would also be easy to build something that never sends a false alarm &mdash; just never alert. The whole difficulty is doing both at once.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section>
+  <div class="col">
+    <div class="head"><span class="num">03</span><h2>How it works, in five steps</h2></div>
+    <p>Video comes in one end. Alerts and reports come out the other. In between, five steps, each one throwing away work the next step would waste time on.</p>
+  </div>
+
+  <div class="steps col">
+    <div class="step">
+      <div class="step-n">1</div>
+      <div>
+        <h3>Look for movement &mdash; cheaply</h3>
+        <p>First we just ask: did anything in this picture change since the last one? That is a quick, simple check.</p>
+        <p class="aside">Like a night guard who dozes with one eye open and only properly looks up when something stirs. About 96% of pictures are thrown away here, and they cost almost nothing to check.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">2</div>
+      <div>
+        <h3>Zoom in on the moving bit</h3>
+        <p>Something moved in the corner. We cut out just that corner at full quality &mdash; rather than shrinking the whole picture down.</p>
+        <p class="aside">This is the most important trick in the whole system. Section 4 explains why.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">3</div>
+      <div>
+        <h3>Ask "what is that?"</h3>
+        <p>Now the expensive part runs, but only on the small cut-out piece. It answers: rat, cat, bird, person, or nothing interesting.</p>
+        <p class="aside">Because steps 1 and 2 did the filtering, this runs about 26 times less often than it otherwise would. That is what lets one small computer handle sixteen cameras.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">4</div>
+      <div>
+        <h3>Watch it for a few seconds before deciding</h3>
+        <p>We never raise an alarm from one picture. We follow the thing across many pictures and ask: did it actually go anywhere? Did it move like a living creature?</p>
+        <p class="aside">A plant swaying in a draught moves constantly but never gets anywhere. A rat crosses the room. One photo cannot tell them apart; a few seconds of movement can. This step alone removes about 93% of the remaining false alarms.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-n">5</div>
+      <div>
+        <h3>Save the proof and tell someone</h3>
+        <p>Now we are confident. Save a video clip, a still picture with the animal marked, the time, the camera, and the path it walked. Then send the alert.</p>
+        <p class="aside">The clip starts <em>before</em> the rat appeared, because we keep the last few seconds of every camera in memory at all times. Otherwise you only ever see the animal already mid-screen.</p>
+      </div>
+    </div>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 880 340" role="img" aria-label="A funnel showing one camera over one night: 650,000 pictures reduce through movement checking, zooming, identifying and watching, down to just 3 alerts sent." style="color:var(--ink-2)">
+        <text x="10" y="20" font-family="Cascadia Mono, Consolas, monospace" font-size="11.5" letter-spacing="1.4" fill="var(--muted)">WHAT GETS THROWN AWAY AT EACH STEP</text>
+
+        <g font-family="Cascadia Mono, Consolas, monospace" font-size="12">
+          <text x="10" y="60" font-size="14.5" font-weight="650" fill="currentColor" font-family="inherit">Pictures recorded</text>
+          <rect x="215" y="40" width="480" height="30" rx="3" fill="var(--accent)" opacity=".22"/>
+          <text x="762" y="60" text-anchor="end" fill="currentColor" font-weight="600">650,000</text>
+
+          <text x="10" y="104" font-size="14.5" font-weight="650" fill="currentColor" font-family="inherit">Something moved</text>
+          <rect x="215" y="84" width="300" height="30" rx="3" fill="var(--accent)" opacity=".22"/>
+          <text x="762" y="104" text-anchor="end" fill="currentColor" font-weight="600">26,000</text>
+          <text x="778" y="104" fill="var(--muted)" font-size="11">wind, staff</text>
+
+          <text x="10" y="148" font-size="14.5" font-weight="650" fill="currentColor" font-family="inherit">Looks like something</text>
+          <rect x="215" y="128" width="210" height="30" rx="3" fill="var(--accent)" opacity=".22"/>
+          <text x="762" y="148" text-anchor="end" fill="currentColor" font-weight="600">4,000</text>
+
+          <text x="10" y="192" font-size="14.5" font-weight="650" fill="currentColor" font-family="inherit">Followed for a while</text>
+          <rect x="215" y="172" width="120" height="30" rx="3" fill="var(--accent)" opacity=".32"/>
+          <text x="762" y="192" text-anchor="end" fill="currentColor" font-weight="600">350</text>
+
+          <text x="10" y="236" font-size="14.5" font-weight="650" fill="currentColor" font-family="inherit">Really was an animal</text>
+          <rect x="215" y="216" width="60" height="30" rx="3" fill="var(--accent)" opacity=".5"/>
+          <text x="762" y="236" text-anchor="end" fill="currentColor" font-weight="600">25</text>
+          <text x="778" y="236" fill="var(--muted)" font-size="11">the firewall</text>
+
+          <text x="10" y="280" font-size="14.5" font-weight="650" fill="var(--accent)" font-family="inherit">Alerts sent</text>
+          <rect x="215" y="260" width="26" height="30" rx="3" fill="var(--accent)"/>
+          <text x="762" y="280" text-anchor="end" fill="var(--accent)" font-weight="700">3</text>
+        </g>
+
+        <line x1="10" y1="306" x2="870" y2="306" stroke="var(--line)"/>
+        <text x="10" y="328" font-family="Cascadia Mono, Consolas, monospace" font-size="11" fill="var(--muted)">bar widths are squeezed to fit — the real drop from 650,000 to 3 is far steeper than it looks</text>
+      </svg>
+    </div>
+    <figcaption><b>650,000 down to 3.</b> Each step is cheap enough to run on what the step before it passed along. The big drop near the bottom &mdash; 350 things followed, only 25 that were really animals &mdash; is step 4 doing its job. Without it the client gets 350 alerts a night and stops reading them within a week.</figcaption>
+  </figure>
+</section>
+
+<!-- 4 -->
+<section>
+  <div class="col">
+    <div class="head"><span class="num">04</span><h2>Why we zoom instead of shrink</h2></div>
+    <p>This is the one technical idea worth understanding, because everything else depends on it.</p>
+    <p>Software that recognises objects needs pictures at a fixed small size &mdash; think of a passport photo. So the normal approach is to shrink the whole camera picture down to fit.</p>
+    <p>That works fine for people and cars, because they are big. <strong>It destroys rats.</strong> Shrinking a wide camera picture makes everything about three times smaller, and a rat that was already tiny becomes a smudge of a dozen dots.</p>
+    <p>Because step 1 already told us <em>where</em> the movement was, we can do something smarter: cut out that patch at full quality, like using a magnifying glass on one part of a map instead of photocopying the whole map smaller.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 860 300" role="img" aria-label="Two panels compared. On the left, shrinking the whole camera picture renders a rat as 13 pixels, too small to recognise. On the right, cutting out just the moving patch at full quality keeps the rat at 40 pixels, large enough to identify." style="color:var(--ink-2)">
+        <text x="10" y="20" font-family="Cascadia Mono, Consolas, monospace" font-size="11.5" letter-spacing="1.3" fill="var(--bad)">SHRINK THE WHOLE PICTURE</text>
+        <text x="450" y="20" font-family="Cascadia Mono, Consolas, monospace" font-size="11.5" letter-spacing="1.3" fill="var(--good)">CUT OUT THE MOVING PATCH</text>
+
+        <!-- left -->
+        <rect x="10" y="34" width="400" height="200" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+        <text x="26" y="56" font-size="13" fill="var(--muted)">the full camera picture</text>
+        <rect x="120" y="72" width="180" height="102" rx="3" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+        <text x="134" y="92" font-size="12.5" fill="var(--muted)">squashed down to fit</text>
+        <rect x="196" y="124" width="13" height="7" fill="var(--bad)"/>
+        <text x="218" y="132" font-size="13" font-weight="650" fill="var(--bad)">rat = 13 dots wide</text>
+        <text x="26" y="204" font-size="15" font-weight="650" fill="var(--bad)">Too small to recognise</text>
+        <text x="26" y="223" font-size="12.5" fill="var(--muted)">the detail is gone before anything even looks at it</text>
+
+        <!-- right -->
+        <rect x="450" y="34" width="400" height="200" rx="5" fill="var(--surface-2)" stroke="var(--good)"/>
+        <text x="466" y="56" font-size="13" fill="var(--muted)">the same full camera picture</text>
+        <rect x="556" y="70" width="170" height="96" rx="3" fill="none" stroke="var(--line-strong)"/>
+        <text x="570" y="86" font-size="12" fill="var(--muted)">movement was spotted here</text>
+        <rect x="614" y="98" width="56" height="56" rx="3" fill="none" stroke="var(--good)" stroke-width="2"/>
+        <rect x="632" y="120" width="20" height="11" fill="var(--good)"/>
+        <text x="682" y="118" font-size="12.5" fill="var(--good)">cut out at</text>
+        <text x="682" y="133" font-size="12.5" fill="var(--good)">full quality</text>
+        <text x="600" y="186" font-size="13" font-weight="650" fill="var(--good)">rat = 40 dots wide</text>
+        <text x="466" y="204" font-size="15" font-weight="650" fill="var(--good)">Big enough to identify</text>
+        <text x="466" y="223" font-size="12.5" fill="var(--muted)">same amount of computer work, three times the detail</text>
+
+        <line x1="10" y1="258" x2="850" y2="258" stroke="var(--line)"/>
+        <text x="10" y="280" font-family="Cascadia Mono, Consolas, monospace" font-size="11" fill="var(--muted)">same camera · same picture · same computing cost</text>
+      </svg>
+    </div>
+    <figcaption><b>The magnifying glass, not the photocopier.</b> Both sides do exactly the same amount of computer work. The difference is that the right-hand side spends it on the part of the picture that matters. This is why the system can find a rat at ten metres where a normal setup would see nothing at all.</figcaption>
+  </figure>
+
+  <div class="col">
+    <div class="callout">
+      <p><strong>There is a limit, and it is set by the camera, not the software.</strong> A rat needs to be at least about 40 dots wide before anything can recognise it. Too far from the camera, or too wide a lens, and it simply is not there to be found &mdash; no software can invent detail the camera never captured.</p>
+      <p>This is why the first job at any new site is checking whether its existing cameras can actually see a rat. Some will not, and it is much cheaper to find that out in week one than in month six.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section>
+  <div class="col">
+    <div class="head"><span class="num">05</span><h2>What comes out</h2></div>
+    <p>When the system is sure, one sighting turns into several useful things at once.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 860 250" role="img" aria-label="One confirmed rat sighting branching into five outputs: a marked photo, a video clip that starts before the animal appeared, the time and camera location, the path it walked, and a phone alert." style="color:var(--ink-2)">
+        <defs>
+          <marker id="a1" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+            <polygon points="0,1 9,4.5 0,8" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <rect x="12" y="92" width="150" height="62" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="87" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">One rat,</text>
+        <text x="87" y="137" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">confirmed</text>
+
+        <g stroke="var(--accent)" marker-end="url(#a1)" fill="none">
+          <path d="M166 108 C 210 108, 210 40, 254 40"/>
+          <path d="M166 116 C 210 116, 210 88, 254 88"/>
+          <path d="M166 123 C 210 123, 210 136, 254 136"/>
+          <path d="M166 131 C 210 131, 210 184, 254 184"/>
+          <path d="M166 139 C 210 139, 210 232, 254 232"/>
+        </g>
+
+        <g font-size="14.5" font-weight="650">
+          <rect x="262" y="20" width="230" height="40" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="278" y="45" fill="currentColor">A photo with the rat marked</text>
+
+          <rect x="262" y="68" width="230" height="40" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="278" y="93" fill="currentColor">A short video clip</text>
+
+          <rect x="262" y="116" width="230" height="40" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="278" y="141" fill="currentColor">Time, date and which camera</text>
+
+          <rect x="262" y="164" width="230" height="40" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="278" y="189" fill="currentColor">The path it walked</text>
+
+          <rect x="262" y="212" width="230" height="40" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="278" y="237" fill="currentColor">A message to someone's phone</text>
+        </g>
+
+        <g font-size="13" fill="var(--muted)">
+          <text x="508" y="45">proof for a food-safety audit</text>
+          <text x="508" y="93">starts before the rat appeared</text>
+          <text x="508" y="141">tells you where to inspect</text>
+          <text x="508" y="189">shows where it came in</text>
+          <text x="508" y="237">only when it really matters</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>One sighting, five useful things.</b> The path is quietly the most valuable one. Collect enough paths over a few weeks and the places where rats <em>first appear</em> start to cluster &mdash; and that cluster is usually the gap they are getting in through. Finding the entry point is worth far more than counting sightings.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>Over weeks, all of this adds up into reports: which areas are worst, what time of night they are active, whether the problem is growing or shrinking, and where to put traps.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section>
+  <div class="col">
+    <div class="head"><span class="num">06</span><h2>Where we are now</h2></div>
+    <p>The machinery is built and tested. One piece is missing, and it is the piece that needs the client.</p>
+  </div>
+
+  <div class="status col">
+    <div class="row"><span class="pill done">done</span><span>Reading video from files and live cameras</span></div>
+    <div class="row"><span class="pill done">done</span><span>Spotting movement, ignoring still frames</span></div>
+    <div class="row"><span class="pill done">done</span><span>Zooming in on the moving patch</span></div>
+    <div class="row"><span class="pill done">done</span><span>Following things and rejecting false alarms</span></div>
+    <div class="row"><span class="pill done">done</span><span>Saving clips, photos and paths</span></div>
+    <div class="row"><span class="pill done">done</span><span>A screen for reviewing what it found</span></div>
+    <div class="row"><span class="pill wait">waiting</span><span>Teaching it what a rat looks like <em>on these sites</em></span></div>
+  </div>
+
+  <div class="col">
+    <h3>Why that last one is waiting</h3>
+    <p>Software that recognises animals has to be taught by example, and it has to be taught on the kind of pictures it will actually see. There is no existing collection of photographs of rats in Indian warehouses at two in the morning, filmed on night-vision CCTV. Nobody has ever made one.</p>
+    <p>So we need <strong>real night footage from real sites.</strong> A few nights from two or three different kinds of building is enough to start. Everything else is ready and waiting for it.</p>
+    <p>Until then the system runs in a deliberately over-eager mode: it flags anything that moves, so that when footage arrives we have plenty of examples to sort through and learn from.</p>
+  </div>
+
+  <div class="col">
+    <div class="callout">
+      <p><strong>In one sentence:</strong> the hard engineering is finished, and the remaining work is teaching &mdash; which needs footage from the client, not more code.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="col">
+  <p>Plain-language guide only &mdash; not part of the software.<br>
+  For the full technical design see <a href="../architecture.html">architecture.html</a>, and for the footage we need see <a href="footage-request.md">footage-request.md</a>.</p>
+</footer>
+
+</div>

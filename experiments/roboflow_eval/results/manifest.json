@@ -1,0 +1,580 @@
+[
+  {
+    "name": "brown_rat__visible",
+    "path": "out\\roboflow_eval\\images\\brown_rat__visible.jpg",
+    "subject": "rat",
+    "condition": "daylight close-up",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Best case. Any rodent model should hit this.",
+    "tags": [
+      "baseline"
+    ]
+  },
+  {
+    "name": "brown_rat__grayscale",
+    "path": "out\\roboflow_eval\\images\\brown_rat__grayscale.jpg",
+    "subject": "rat",
+    "condition": "colour removed",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Isolates colour dependence.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "brown_rat__nir_night",
+    "path": "out\\roboflow_eval\\images\\brown_rat__nir_night.jpg",
+    "subject": "rat",
+    "condition": "near-IR CCTV night",
+    "modality": "nir_sim",
+    "expect_rodent": true,
+    "notes": "OUR ACTUAL DOMAIN. Greyscale, flat contrast, IR falloff, noise.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "brown_rat__thermal_colour",
+    "path": "out\\roboflow_eval\\images\\brown_rat__thermal_colour.jpg",
+    "subject": "rat",
+    "condition": "thermal, inferno palette",
+    "modality": "thermal_sim",
+    "expect_rodent": true,
+    "notes": "Hot-blob-on-cool-background, the property LWIR training keys on.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "brown_rat__thermal_whitehot",
+    "path": "out\\roboflow_eval\\images\\brown_rat__thermal_whitehot.jpg",
+    "subject": "rat",
+    "condition": "thermal, white-hot",
+    "modality": "thermal_sim",
+    "expect_rodent": true,
+    "notes": "Same, monochrome white-hot palette.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "brown_rat__small_10pct",
+    "path": "out\\roboflow_eval\\images\\brown_rat__small_10pct.jpg",
+    "subject": "rat",
+    "condition": "subject 10% of frame width",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Mid-range CCTV distance.",
+    "tags": [
+      "ablation",
+      "small-object"
+    ]
+  },
+  {
+    "name": "brown_rat__small_3pct",
+    "path": "out\\roboflow_eval\\images\\brown_rat__small_3pct.jpg",
+    "subject": "rat",
+    "condition": "subject 3% of frame width",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Realistic CCTV distance (~10 m on 2 MP).",
+    "tags": [
+      "ablation",
+      "small-object"
+    ]
+  },
+  {
+    "name": "brown_rat__small_nir",
+    "path": "out\\roboflow_eval\\images\\brown_rat__small_nir.jpg",
+    "subject": "rat",
+    "condition": "small AND near-IR",
+    "modality": "nir_sim",
+    "expect_rodent": true,
+    "notes": "The realistic combination: both conditions at once.",
+    "tags": [
+      "ablation",
+      "critical",
+      "small-object"
+    ]
+  },
+  {
+    "name": "brown_rat__motion_blur",
+    "path": "out\\roboflow_eval\\images\\brown_rat__motion_blur.jpg",
+    "subject": "rat",
+    "condition": "horizontal motion blur",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Slow night shutter on a moving animal.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "brown_rat__low_contrast",
+    "path": "out\\roboflow_eval\\images\\brown_rat__low_contrast.jpg",
+    "subject": "rat",
+    "condition": "compressed dynamic range",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "brown_rat__high_angle",
+    "path": "out\\roboflow_eval\\images\\brown_rat__high_angle.jpg",
+    "subject": "rat",
+    "condition": "ceiling-mounted viewpoint",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Security cameras look down; rodent datasets are shot side-on.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "brown_rat__multiple",
+    "path": "out\\roboflow_eval\\images\\brown_rat__multiple.jpg",
+    "subject": "3x rat",
+    "condition": "three rodents, CCTV scale",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "",
+    "tags": [
+      "ablation",
+      "multi"
+    ]
+  },
+  {
+    "name": "house_mouse__visible",
+    "path": "out\\roboflow_eval\\images\\house_mouse__visible.jpg",
+    "subject": "mouse",
+    "condition": "daylight close-up",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Best case. Any rodent model should hit this.",
+    "tags": [
+      "baseline"
+    ]
+  },
+  {
+    "name": "house_mouse__grayscale",
+    "path": "out\\roboflow_eval\\images\\house_mouse__grayscale.jpg",
+    "subject": "mouse",
+    "condition": "colour removed",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Isolates colour dependence.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "house_mouse__nir_night",
+    "path": "out\\roboflow_eval\\images\\house_mouse__nir_night.jpg",
+    "subject": "mouse",
+    "condition": "near-IR CCTV night",
+    "modality": "nir_sim",
+    "expect_rodent": true,
+    "notes": "OUR ACTUAL DOMAIN. Greyscale, flat contrast, IR falloff, noise.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "house_mouse__thermal_colour",
+    "path": "out\\roboflow_eval\\images\\house_mouse__thermal_colour.jpg",
+    "subject": "mouse",
+    "condition": "thermal, inferno palette",
+    "modality": "thermal_sim",
+    "expect_rodent": true,
+    "notes": "Hot-blob-on-cool-background, the property LWIR training keys on.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "house_mouse__thermal_whitehot",
+    "path": "out\\roboflow_eval\\images\\house_mouse__thermal_whitehot.jpg",
+    "subject": "mouse",
+    "condition": "thermal, white-hot",
+    "modality": "thermal_sim",
+    "expect_rodent": true,
+    "notes": "Same, monochrome white-hot palette.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "house_mouse__small_10pct",
+    "path": "out\\roboflow_eval\\images\\house_mouse__small_10pct.jpg",
+    "subject": "mouse",
+    "condition": "subject 10% of frame width",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Mid-range CCTV distance.",
+    "tags": [
+      "ablation",
+      "small-object"
+    ]
+  },
+  {
+    "name": "house_mouse__small_3pct",
+    "path": "out\\roboflow_eval\\images\\house_mouse__small_3pct.jpg",
+    "subject": "mouse",
+    "condition": "subject 3% of frame width",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Realistic CCTV distance (~10 m on 2 MP).",
+    "tags": [
+      "ablation",
+      "small-object"
+    ]
+  },
+  {
+    "name": "house_mouse__small_nir",
+    "path": "out\\roboflow_eval\\images\\house_mouse__small_nir.jpg",
+    "subject": "mouse",
+    "condition": "small AND near-IR",
+    "modality": "nir_sim",
+    "expect_rodent": true,
+    "notes": "The realistic combination: both conditions at once.",
+    "tags": [
+      "ablation",
+      "critical",
+      "small-object"
+    ]
+  },
+  {
+    "name": "house_mouse__motion_blur",
+    "path": "out\\roboflow_eval\\images\\house_mouse__motion_blur.jpg",
+    "subject": "mouse",
+    "condition": "horizontal motion blur",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Slow night shutter on a moving animal.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "house_mouse__low_contrast",
+    "path": "out\\roboflow_eval\\images\\house_mouse__low_contrast.jpg",
+    "subject": "mouse",
+    "condition": "compressed dynamic range",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "house_mouse__high_angle",
+    "path": "out\\roboflow_eval\\images\\house_mouse__high_angle.jpg",
+    "subject": "mouse",
+    "condition": "ceiling-mounted viewpoint",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Security cameras look down; rodent datasets are shot side-on.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "house_mouse__multiple",
+    "path": "out\\roboflow_eval\\images\\house_mouse__multiple.jpg",
+    "subject": "3x mouse",
+    "condition": "three rodents, CCTV scale",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "",
+    "tags": [
+      "ablation",
+      "multi"
+    ]
+  },
+  {
+    "name": "black_rat__visible",
+    "path": "out\\roboflow_eval\\images\\black_rat__visible.jpg",
+    "subject": "rat",
+    "condition": "daylight close-up",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Best case. Any rodent model should hit this.",
+    "tags": [
+      "baseline"
+    ]
+  },
+  {
+    "name": "black_rat__grayscale",
+    "path": "out\\roboflow_eval\\images\\black_rat__grayscale.jpg",
+    "subject": "rat",
+    "condition": "colour removed",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Isolates colour dependence.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "black_rat__nir_night",
+    "path": "out\\roboflow_eval\\images\\black_rat__nir_night.jpg",
+    "subject": "rat",
+    "condition": "near-IR CCTV night",
+    "modality": "nir_sim",
+    "expect_rodent": true,
+    "notes": "OUR ACTUAL DOMAIN. Greyscale, flat contrast, IR falloff, noise.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "black_rat__thermal_colour",
+    "path": "out\\roboflow_eval\\images\\black_rat__thermal_colour.jpg",
+    "subject": "rat",
+    "condition": "thermal, inferno palette",
+    "modality": "thermal_sim",
+    "expect_rodent": true,
+    "notes": "Hot-blob-on-cool-background, the property LWIR training keys on.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "black_rat__thermal_whitehot",
+    "path": "out\\roboflow_eval\\images\\black_rat__thermal_whitehot.jpg",
+    "subject": "rat",
+    "condition": "thermal, white-hot",
+    "modality": "thermal_sim",
+    "expect_rodent": true,
+    "notes": "Same, monochrome white-hot palette.",
+    "tags": [
+      "ablation",
+      "critical"
+    ]
+  },
+  {
+    "name": "black_rat__small_10pct",
+    "path": "out\\roboflow_eval\\images\\black_rat__small_10pct.jpg",
+    "subject": "rat",
+    "condition": "subject 10% of frame width",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Mid-range CCTV distance.",
+    "tags": [
+      "ablation",
+      "small-object"
+    ]
+  },
+  {
+    "name": "black_rat__small_3pct",
+    "path": "out\\roboflow_eval\\images\\black_rat__small_3pct.jpg",
+    "subject": "rat",
+    "condition": "subject 3% of frame width",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Realistic CCTV distance (~10 m on 2 MP).",
+    "tags": [
+      "ablation",
+      "small-object"
+    ]
+  },
+  {
+    "name": "black_rat__small_nir",
+    "path": "out\\roboflow_eval\\images\\black_rat__small_nir.jpg",
+    "subject": "rat",
+    "condition": "small AND near-IR",
+    "modality": "nir_sim",
+    "expect_rodent": true,
+    "notes": "The realistic combination: both conditions at once.",
+    "tags": [
+      "ablation",
+      "critical",
+      "small-object"
+    ]
+  },
+  {
+    "name": "black_rat__motion_blur",
+    "path": "out\\roboflow_eval\\images\\black_rat__motion_blur.jpg",
+    "subject": "rat",
+    "condition": "horizontal motion blur",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Slow night shutter on a moving animal.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "black_rat__low_contrast",
+    "path": "out\\roboflow_eval\\images\\black_rat__low_contrast.jpg",
+    "subject": "rat",
+    "condition": "compressed dynamic range",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "black_rat__high_angle",
+    "path": "out\\roboflow_eval\\images\\black_rat__high_angle.jpg",
+    "subject": "rat",
+    "condition": "ceiling-mounted viewpoint",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "Security cameras look down; rodent datasets are shot side-on.",
+    "tags": [
+      "ablation"
+    ]
+  },
+  {
+    "name": "black_rat__multiple",
+    "path": "out\\roboflow_eval\\images\\black_rat__multiple.jpg",
+    "subject": "3x rat",
+    "condition": "three rodents, CCTV scale",
+    "modality": "visible",
+    "expect_rodent": true,
+    "notes": "",
+    "tags": [
+      "ablation",
+      "multi"
+    ]
+  },
+  {
+    "name": "thermography__thermal_real",
+    "path": "out\\roboflow_eval\\images\\thermography__thermal_real.jpg",
+    "subject": "thermal scene",
+    "condition": "genuine LWIR thermogram",
+    "modality": "thermal_real",
+    "expect_rodent": false,
+    "notes": "Real thermal, no rodent. Checks whether the model fires on thermal-looking imagery regardless of content.",
+    "tags": [
+      "control",
+      "thermal"
+    ]
+  },
+  {
+    "name": "thermographic_camera__thermal_real",
+    "path": "out\\roboflow_eval\\images\\thermographic_camera__thermal_real.jpg",
+    "subject": "thermal scene",
+    "condition": "genuine LWIR thermogram",
+    "modality": "thermal_real",
+    "expect_rodent": false,
+    "notes": "Real thermal, no rodent. Checks whether the model fires on thermal-looking imagery regardless of content.",
+    "tags": [
+      "control",
+      "thermal"
+    ]
+  },
+  {
+    "name": "cat__negative",
+    "path": "out\\roboflow_eval\\images\\cat__negative.jpg",
+    "subject": "cat",
+    "condition": "non-rodent animal",
+    "modality": "visible",
+    "expect_rodent": false,
+    "notes": "False-positive check: a cat is not a rodent.",
+    "tags": [
+      "control"
+    ]
+  },
+  {
+    "name": "cat__negative_nir",
+    "path": "out\\roboflow_eval\\images\\cat__negative_nir.jpg",
+    "subject": "cat",
+    "condition": "non-rodent animal, near-IR",
+    "modality": "nir_sim",
+    "expect_rodent": false,
+    "notes": "",
+    "tags": [
+      "control"
+    ]
+  },
+  {
+    "name": "domestic_pigeon__negative",
+    "path": "out\\roboflow_eval\\images\\domestic_pigeon__negative.jpg",
+    "subject": "bird",
+    "condition": "non-rodent animal",
+    "modality": "visible",
+    "expect_rodent": false,
+    "notes": "False-positive check: a cat is not a rodent.",
+    "tags": [
+      "control"
+    ]
+  },
+  {
+    "name": "domestic_pigeon__negative_nir",
+    "path": "out\\roboflow_eval\\images\\domestic_pigeon__negative_nir.jpg",
+    "subject": "bird",
+    "condition": "non-rodent animal, near-IR",
+    "modality": "nir_sim",
+    "expect_rodent": false,
+    "notes": "",
+    "tags": [
+      "control"
+    ]
+  },
+  {
+    "name": "empty_floor",
+    "path": "out\\roboflow_eval\\images\\empty_floor.jpg",
+    "subject": "nothing",
+    "condition": "empty warehouse floor",
+    "modality": "nir_sim",
+    "expect_rodent": false,
+    "notes": "Pure false-positive check.",
+    "tags": [
+      "control"
+    ]
+  },
+  {
+    "name": "fixture_f135",
+    "path": "out\\roboflow_eval\\images\\fixture_f135.jpg",
+    "subject": "synthetic rodent",
+    "condition": "our pipeline fixture, crossing",
+    "modality": "synthetic",
+    "expect_rodent": true,
+    "notes": "Synthetic, so a miss here is weak evidence \u2014 but it is literally what our collector processes today.",
+    "tags": [
+      "fixture"
+    ]
+  },
+  {
+    "name": "fixture_f150",
+    "path": "out\\roboflow_eval\\images\\fixture_f150.jpg",
+    "subject": "synthetic rodent",
+    "condition": "our pipeline fixture, crossing",
+    "modality": "synthetic",
+    "expect_rodent": true,
+    "notes": "Synthetic, so a miss here is weak evidence \u2014 but it is literally what our collector processes today.",
+    "tags": [
+      "fixture"
+    ]
+  },
+  {
+    "name": "fixture_f300",
+    "path": "out\\roboflow_eval\\images\\fixture_f300.jpg",
+    "subject": "synthetic rodent",
+    "condition": "our pipeline fixture, crossing",
+    "modality": "synthetic",
+    "expect_rodent": true,
+    "notes": "Synthetic, so a miss here is weak evidence \u2014 but it is literally what our collector processes today.",
+    "tags": [
+      "fixture"
+    ]
+  }
+]

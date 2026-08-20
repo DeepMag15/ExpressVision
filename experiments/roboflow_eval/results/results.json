@@ -1,0 +1,1296 @@
+{
+  "model_id": "thermal-rodent-detection-xkfep/1",
+  "records": [
+    {
+      "name": "brown_rat__visible",
+      "subject": "rat",
+      "condition": "daylight close-up",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "baseline"
+      ],
+      "notes": "Best case. Any rodent model should hit this.",
+      "error": null,
+      "latency_ms": 4127.8,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7992,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7992,
+          "xyxy": [
+            277.0,
+            143.0,
+            1999.0,
+            1886.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brown_rat__grayscale",
+      "subject": "rat",
+      "condition": "colour removed",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Isolates colour dependence.",
+      "error": null,
+      "latency_ms": 928.1,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7754,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7754,
+          "xyxy": [
+            265.0,
+            144.0,
+            2400.0,
+            1711.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brown_rat__nir_night",
+      "subject": "rat",
+      "condition": "near-IR CCTV night",
+      "modality": "nir_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "OUR ACTUAL DOMAIN. Greyscale, flat contrast, IR falloff, noise.",
+      "error": null,
+      "latency_ms": 2682.4,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7963,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7963,
+          "xyxy": [
+            109.0,
+            132.0,
+            2843.0,
+            1720.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brown_rat__thermal_colour",
+      "subject": "rat",
+      "condition": "thermal, inferno palette",
+      "modality": "thermal_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "Hot-blob-on-cool-background, the property LWIR training keys on.",
+      "error": null,
+      "latency_ms": 643.5,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "brown_rat__thermal_whitehot",
+      "subject": "rat",
+      "condition": "thermal, white-hot",
+      "modality": "thermal_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "Same, monochrome white-hot palette.",
+      "error": null,
+      "latency_ms": 2126.0,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.6826,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.6826,
+          "xyxy": [
+            109.0,
+            56.0,
+            2839.0,
+            1947.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brown_rat__small_10pct",
+      "subject": "rat",
+      "condition": "subject 10% of frame width",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "small-object"
+      ],
+      "notes": "Mid-range CCTV distance.",
+      "error": null,
+      "latency_ms": 490.1,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "brown_rat__small_3pct",
+      "subject": "rat",
+      "condition": "subject 3% of frame width",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "small-object"
+      ],
+      "notes": "Realistic CCTV distance (~10 m on 2 MP).",
+      "error": null,
+      "latency_ms": 4085.2,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "brown_rat__small_nir",
+      "subject": "rat",
+      "condition": "small AND near-IR",
+      "modality": "nir_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical",
+        "small-object"
+      ],
+      "notes": "The realistic combination: both conditions at once.",
+      "error": null,
+      "latency_ms": 597.2,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "brown_rat__motion_blur",
+      "subject": "rat",
+      "condition": "horizontal motion blur",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Slow night shutter on a moving animal.",
+      "error": null,
+      "latency_ms": 878.7,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.8033,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.8033,
+          "xyxy": [
+            253.0,
+            133.0,
+            2008.0,
+            1863.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brown_rat__low_contrast",
+      "subject": "rat",
+      "condition": "compressed dynamic range",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "",
+      "error": null,
+      "latency_ms": 880.2,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7018,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7018,
+          "xyxy": [
+            266.0,
+            141.0,
+            2031.0,
+            1845.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brown_rat__high_angle",
+      "subject": "rat",
+      "condition": "ceiling-mounted viewpoint",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Security cameras look down; rodent datasets are shot side-on.",
+      "error": null,
+      "latency_ms": 1113.3,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7475,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7475,
+          "xyxy": [
+            270.0,
+            6.0,
+            2267.0,
+            1732.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brown_rat__multiple",
+      "subject": "3x rat",
+      "condition": "three rodents, CCTV scale",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "multi"
+      ],
+      "notes": "",
+      "error": null,
+      "latency_ms": 399.8,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "house_mouse__visible",
+      "subject": "mouse",
+      "condition": "daylight close-up",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "baseline"
+      ],
+      "notes": "Best case. Any rodent model should hit this.",
+      "error": null,
+      "latency_ms": 374.3,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.8697,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.8697,
+          "xyxy": [
+            25.0,
+            29.0,
+            286.0,
+            190.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "house_mouse__grayscale",
+      "subject": "mouse",
+      "condition": "colour removed",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Isolates colour dependence.",
+      "error": null,
+      "latency_ms": 385.0,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.8711,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.8711,
+          "xyxy": [
+            39.0,
+            28.0,
+            289.0,
+            190.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "house_mouse__nir_night",
+      "subject": "mouse",
+      "condition": "near-IR CCTV night",
+      "modality": "nir_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "OUR ACTUAL DOMAIN. Greyscale, flat contrast, IR falloff, noise.",
+      "error": null,
+      "latency_ms": 397.1,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.8436,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.8436,
+          "xyxy": [
+            46.0,
+            30.0,
+            284.0,
+            187.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "house_mouse__thermal_colour",
+      "subject": "mouse",
+      "condition": "thermal, inferno palette",
+      "modality": "thermal_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "Hot-blob-on-cool-background, the property LWIR training keys on.",
+      "error": null,
+      "latency_ms": 369.3,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "house_mouse__thermal_whitehot",
+      "subject": "mouse",
+      "condition": "thermal, white-hot",
+      "modality": "thermal_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "Same, monochrome white-hot palette.",
+      "error": null,
+      "latency_ms": 375.0,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.8594,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.8594,
+          "xyxy": [
+            14.0,
+            20.0,
+            293.0,
+            197.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "house_mouse__small_10pct",
+      "subject": "mouse",
+      "condition": "subject 10% of frame width",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "small-object"
+      ],
+      "notes": "Mid-range CCTV distance.",
+      "error": null,
+      "latency_ms": 502.0,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.5704,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.5704,
+          "xyxy": [
+            450.0,
+            449.0,
+            573.0,
+            530.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "house_mouse__small_3pct",
+      "subject": "mouse",
+      "condition": "subject 3% of frame width",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "small-object"
+      ],
+      "notes": "Realistic CCTV distance (~10 m on 2 MP).",
+      "error": null,
+      "latency_ms": 521.6,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "house_mouse__small_nir",
+      "subject": "mouse",
+      "condition": "small AND near-IR",
+      "modality": "nir_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical",
+        "small-object"
+      ],
+      "notes": "The realistic combination: both conditions at once.",
+      "error": null,
+      "latency_ms": 2011.7,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "house_mouse__motion_blur",
+      "subject": "mouse",
+      "condition": "horizontal motion blur",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Slow night shutter on a moving animal.",
+      "error": null,
+      "latency_ms": 370.0,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.8111,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.8111,
+          "xyxy": [
+            33.0,
+            16.0,
+            296.0,
+            193.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "house_mouse__low_contrast",
+      "subject": "mouse",
+      "condition": "compressed dynamic range",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "",
+      "error": null,
+      "latency_ms": 391.4,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.8721,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.8721,
+          "xyxy": [
+            44.0,
+            28.0,
+            291.0,
+            191.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "house_mouse__high_angle",
+      "subject": "mouse",
+      "condition": "ceiling-mounted viewpoint",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Security cameras look down; rodent datasets are shot side-on.",
+      "error": null,
+      "latency_ms": 464.7,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.8248,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.8248,
+          "xyxy": [
+            36.0,
+            0.0,
+            264.0,
+            185.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "house_mouse__multiple",
+      "subject": "3x mouse",
+      "condition": "three rodents, CCTV scale",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "multi"
+      ],
+      "notes": "",
+      "error": null,
+      "latency_ms": 391.0,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "black_rat__visible",
+      "subject": "rat",
+      "condition": "daylight close-up",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "baseline"
+      ],
+      "notes": "Best case. Any rodent model should hit this.",
+      "error": null,
+      "latency_ms": 3541.3,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7292,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7292,
+          "xyxy": [
+            492.0,
+            727.0,
+            3620.0,
+            1964.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "black_rat__grayscale",
+      "subject": "rat",
+      "condition": "colour removed",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Isolates colour dependence.",
+      "error": null,
+      "latency_ms": 2494.5,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7201,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7201,
+          "xyxy": [
+            508.0,
+            730.0,
+            3645.0,
+            1966.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "black_rat__nir_night",
+      "subject": "rat",
+      "condition": "near-IR CCTV night",
+      "modality": "nir_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "OUR ACTUAL DOMAIN. Greyscale, flat contrast, IR falloff, noise.",
+      "error": null,
+      "latency_ms": 3270.4,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7302,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7302,
+          "xyxy": [
+            523.0,
+            731.0,
+            3606.0,
+            1965.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "black_rat__thermal_colour",
+      "subject": "rat",
+      "condition": "thermal, inferno palette",
+      "modality": "thermal_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "Hot-blob-on-cool-background, the property LWIR training keys on.",
+      "error": null,
+      "latency_ms": 824.3,
+      "n_predictions": 2,
+      "n_rodent": 2,
+      "best_conf": 0.4877,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.4877,
+          "xyxy": [
+            829.0,
+            968.0,
+            3584.0,
+            2021.0
+          ]
+        },
+        {
+          "label": "rodent",
+          "conf": 0.1915,
+          "xyxy": [
+            387.0,
+            21.0,
+            3724.0,
+            2051.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "black_rat__thermal_whitehot",
+      "subject": "rat",
+      "condition": "thermal, white-hot",
+      "modality": "thermal_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical"
+      ],
+      "notes": "Same, monochrome white-hot palette.",
+      "error": null,
+      "latency_ms": 815.1,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7451,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7451,
+          "xyxy": [
+            512.0,
+            660.0,
+            3600.0,
+            1971.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "black_rat__small_10pct",
+      "subject": "rat",
+      "condition": "subject 10% of frame width",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "small-object"
+      ],
+      "notes": "Mid-range CCTV distance.",
+      "error": null,
+      "latency_ms": 523.9,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "black_rat__small_3pct",
+      "subject": "rat",
+      "condition": "subject 3% of frame width",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "small-object"
+      ],
+      "notes": "Realistic CCTV distance (~10 m on 2 MP).",
+      "error": null,
+      "latency_ms": 573.6,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "black_rat__small_nir",
+      "subject": "rat",
+      "condition": "small AND near-IR",
+      "modality": "nir_sim",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "critical",
+        "small-object"
+      ],
+      "notes": "The realistic combination: both conditions at once.",
+      "error": null,
+      "latency_ms": 610.8,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "black_rat__motion_blur",
+      "subject": "rat",
+      "condition": "horizontal motion blur",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Slow night shutter on a moving animal.",
+      "error": null,
+      "latency_ms": 1820.5,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7253,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7253,
+          "xyxy": [
+            449.0,
+            690.0,
+            3600.0,
+            1975.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "black_rat__low_contrast",
+      "subject": "rat",
+      "condition": "compressed dynamic range",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "",
+      "error": null,
+      "latency_ms": 2509.6,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7548,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7548,
+          "xyxy": [
+            484.0,
+            722.0,
+            3542.0,
+            1973.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "black_rat__high_angle",
+      "subject": "rat",
+      "condition": "ceiling-mounted viewpoint",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation"
+      ],
+      "notes": "Security cameras look down; rodent datasets are shot side-on.",
+      "error": null,
+      "latency_ms": 3252.0,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.7134,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7134,
+          "xyxy": [
+            647.0,
+            239.0,
+            3282.0,
+            1834.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "black_rat__multiple",
+      "subject": "3x rat",
+      "condition": "three rodents, CCTV scale",
+      "modality": "visible",
+      "expect_rodent": true,
+      "tags": [
+        "ablation",
+        "multi"
+      ],
+      "notes": "",
+      "error": null,
+      "latency_ms": 613.2,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "thermography__thermal_real",
+      "subject": "thermal scene",
+      "condition": "genuine LWIR thermogram",
+      "modality": "thermal_real",
+      "expect_rodent": false,
+      "tags": [
+        "control",
+        "thermal"
+      ],
+      "notes": "Real thermal, no rodent. Checks whether the model fires on thermal-looking imagery regardless of content.",
+      "error": null,
+      "latency_ms": 434.2,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.1293,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.1293,
+          "xyxy": [
+            225.0,
+            34.0,
+            385.0,
+            269.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "thermographic_camera__thermal_real",
+      "subject": "thermal scene",
+      "condition": "genuine LWIR thermogram",
+      "modality": "thermal_real",
+      "expect_rodent": false,
+      "tags": [
+        "control",
+        "thermal"
+      ],
+      "notes": "Real thermal, no rodent. Checks whether the model fires on thermal-looking imagery regardless of content.",
+      "error": null,
+      "latency_ms": 425.6,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.1293,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.1293,
+          "xyxy": [
+            225.0,
+            34.0,
+            385.0,
+            269.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cat__negative",
+      "subject": "cat",
+      "condition": "non-rodent animal",
+      "modality": "visible",
+      "expect_rodent": false,
+      "tags": [
+        "control"
+      ],
+      "notes": "False-positive check: a cat is not a rodent.",
+      "error": null,
+      "latency_ms": 2006.0,
+      "n_predictions": 3,
+      "n_rodent": 3,
+      "best_conf": 0.2495,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.2495,
+          "xyxy": [
+            182.0,
+            873.0,
+            1450.0,
+            1965.0
+          ]
+        },
+        {
+          "label": "rodent",
+          "conf": 0.2222,
+          "xyxy": [
+            2641.0,
+            1160.0,
+            3500.0,
+            1396.0
+          ]
+        },
+        {
+          "label": "rodent",
+          "conf": 0.1421,
+          "xyxy": [
+            58.0,
+            459.0,
+            3354.0,
+            1379.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cat__negative_nir",
+      "subject": "cat",
+      "condition": "non-rodent animal, near-IR",
+      "modality": "nir_sim",
+      "expect_rodent": false,
+      "tags": [
+        "control"
+      ],
+      "notes": "",
+      "error": null,
+      "latency_ms": 3587.3,
+      "n_predictions": 2,
+      "n_rodent": 2,
+      "best_conf": 0.5696,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.5696,
+          "xyxy": [
+            190.0,
+            876.0,
+            1417.0,
+            1948.0
+          ]
+        },
+        {
+          "label": "rodent",
+          "conf": 0.2915,
+          "xyxy": [
+            2622.0,
+            1167.0,
+            3489.0,
+            1392.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "domestic_pigeon__negative",
+      "subject": "bird",
+      "condition": "non-rodent animal",
+      "modality": "visible",
+      "expect_rodent": false,
+      "tags": [
+        "control"
+      ],
+      "notes": "False-positive check: a cat is not a rodent.",
+      "error": null,
+      "latency_ms": 3065.4,
+      "n_predictions": 3,
+      "n_rodent": 3,
+      "best_conf": 0.7294,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.7294,
+          "xyxy": [
+            542.0,
+            1127.0,
+            1040.0,
+            1508.0
+          ]
+        },
+        {
+          "label": "rodent",
+          "conf": 0.2237,
+          "xyxy": [
+            1074.0,
+            1613.0,
+            1412.0,
+            2292.0
+          ]
+        },
+        {
+          "label": "rodent",
+          "conf": 0.1133,
+          "xyxy": [
+            55.0,
+            1005.0,
+            480.0,
+            1549.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "domestic_pigeon__negative_nir",
+      "subject": "bird",
+      "condition": "non-rodent animal, near-IR",
+      "modality": "nir_sim",
+      "expect_rodent": false,
+      "tags": [
+        "control"
+      ],
+      "notes": "",
+      "error": null,
+      "latency_ms": 3757.6,
+      "n_predictions": 1,
+      "n_rodent": 1,
+      "best_conf": 0.6732,
+      "labels": [
+        "rodent"
+      ],
+      "boxes": [
+        {
+          "label": "rodent",
+          "conf": 0.6732,
+          "xyxy": [
+            556.0,
+            1125.0,
+            1039.0,
+            1492.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "empty_floor",
+      "subject": "nothing",
+      "condition": "empty warehouse floor",
+      "modality": "nir_sim",
+      "expect_rodent": false,
+      "tags": [
+        "control"
+      ],
+      "notes": "Pure false-positive check.",
+      "error": null,
+      "latency_ms": 518.5,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "fixture_f135",
+      "subject": "synthetic rodent",
+      "condition": "our pipeline fixture, crossing",
+      "modality": "synthetic",
+      "expect_rodent": true,
+      "tags": [
+        "fixture"
+      ],
+      "notes": "Synthetic, so a miss here is weak evidence \u2014 but it is literally what our collector processes today.",
+      "error": null,
+      "latency_ms": 542.9,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "fixture_f150",
+      "subject": "synthetic rodent",
+      "condition": "our pipeline fixture, crossing",
+      "modality": "synthetic",
+      "expect_rodent": true,
+      "tags": [
+        "fixture"
+      ],
+      "notes": "Synthetic, so a miss here is weak evidence \u2014 but it is literally what our collector processes today.",
+      "error": null,
+      "latency_ms": 558.3,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    },
+    {
+      "name": "fixture_f300",
+      "subject": "synthetic rodent",
+      "condition": "our pipeline fixture, crossing",
+      "modality": "synthetic",
+      "expect_rodent": true,
+      "tags": [
+        "fixture"
+      ],
+      "notes": "Synthetic, so a miss here is weak evidence \u2014 but it is literally what our collector processes today.",
+      "error": null,
+      "latency_ms": 591.0,
+      "n_predictions": 0,
+      "n_rodent": 0,
+      "best_conf": 0.0,
+      "labels": [],
+      "boxes": []
+    }
+  ]
+}

@@ -1,0 +1,919 @@
+<title>ExpressVision Blueprint</title>
+<style>
+:root{
+  --ground:#F1F4F0; --surface:#FFFFFF; --surface-2:#E6EBE4;
+  --ink:#131A18; --ink-2:#3B4642; --muted:#67736E;
+  --line:#D0D8CD; --line-strong:#A7B3A5;
+  --accent:#AC6510; --accent-soft:#F7E7CA;
+  --site:#2E6E5C; --site-soft:#DCEAE4;
+  --server:#3D6076; --server-soft:#DCE6EC;
+  --bad:#A83C2C; --bad-soft:#F6DED8;
+  --shadow:0 1px 2px rgba(19,26,24,.05),0 8px 24px -14px rgba(19,26,24,.24);
+  --rail:250px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1312; --surface:#151D1B; --surface-2:#1E2725;
+    --ink:#E4EAE5; --ink-2:#B6C1BB; --muted:#828F89;
+    --line:#28322F; --line-strong:#3E4945;
+    --accent:#E5A64E; --accent-soft:#352A16;
+    --site:#63AC97; --site-soft:#152E28;
+    --server:#87AEC8; --server-soft:#17252D;
+    --bad:#DD7A66; --bad-soft:#3A221D;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1312; --surface:#151D1B; --surface-2:#1E2725;
+  --ink:#E4EAE5; --ink-2:#B6C1BB; --muted:#828F89;
+  --line:#28322F; --line-strong:#3E4945;
+  --accent:#E5A64E; --accent-soft:#352A16;
+  --site:#63AC97; --site-soft:#152E28;
+  --server:#87AEC8; --server-soft:#17252D;
+  --bad:#DD7A66; --bad-soft:#3A221D;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:"Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,
+    "Helvetica Neue",Arial,sans-serif;
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased;
+}
+.shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);max-width:1400px;margin:0 auto}
+
+.rail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:32px 20px 40px 26px;border-right:1px solid var(--line)}
+.rail-mark{font-weight:700;font-size:15px;letter-spacing:-.01em}
+.rail-sub{font-family:"Cascadia Mono",Consolas,monospace;font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:22px}
+.rail nav{display:flex;flex-direction:column;gap:1px}
+.rail nav a{font-size:13px;line-height:1.35;color:var(--ink-2);text-decoration:none;
+  padding:5px 9px;border-radius:4px;border-left:2px solid transparent;display:flex;gap:9px}
+.rail nav a i{font-style:normal;font-family:"Cascadia Mono",Consolas,monospace;
+  font-size:11px;color:var(--muted);min-width:16px}
+.rail nav a:hover{background:var(--surface-2);color:var(--ink)}
+.rail nav a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft)}
+.rail nav a.on i{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.main{padding:0 40px 110px;min-width:0}
+.col{max-width:66ch}
+
+h1{font-weight:700;font-size:clamp(30px,4.4vw,46px);line-height:1.05;
+  letter-spacing:-.03em;margin:0 0 18px;text-wrap:balance;max-width:17ch}
+h2{font-weight:700;font-size:clamp(22px,2.7vw,28px);line-height:1.2;
+  letter-spacing:-.02em;margin:0;text-wrap:balance}
+h3{font-weight:650;font-size:18px;margin:30px 0 7px;letter-spacing:-.01em}
+h4{font-weight:650;font-size:15.5px;margin:20px 0 4px}
+p{margin:0 0 16px;color:var(--ink-2)}
+strong{color:var(--ink);font-weight:650}
+ul,ol{margin:0 0 16px;padding-left:22px;color:var(--ink-2)}
+li{margin-bottom:6px}
+li::marker{color:var(--muted)}
+code{font-family:"Cascadia Mono",Consolas,monospace;font-size:.87em;
+  background:var(--surface-2);padding:1px 5px;border-radius:3px;color:var(--ink)}
+
+header{padding:70px 0 30px}
+.eyebrow{font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin:0 0 18px}
+.lede{font-size:20px;line-height:1.55;color:var(--ink-2);max-width:54ch;margin:0}
+.note{margin-top:26px;padding:13px 18px;border-radius:6px;background:var(--surface-2);
+  border:1px solid var(--line);font-size:14.5px;color:var(--muted);max-width:62ch}
+
+section{padding-top:60px;scroll-margin-top:16px}
+.head{display:flex;align-items:baseline;gap:15px;margin-bottom:18px}
+.num{font-family:"Cascadia Mono",Consolas,monospace;font-size:12.5px;color:var(--accent);
+  flex:none;padding-top:5px}
+
+figure{margin:30px 0;padding:0}
+.figbox{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:24px 22px 18px;box-shadow:var(--shadow);overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;min-width:660px}
+figcaption{font-size:14.5px;line-height:1.5;color:var(--muted);margin-top:13px;max-width:76ch}
+figcaption b{color:var(--ink-2);font-weight:650}
+
+.key{display:flex;flex-wrap:wrap;gap:16px;margin:16px 0 0;font-size:13.5px;color:var(--muted)}
+.key span{display:flex;align-items:center;gap:7px}
+.dot{width:12px;height:12px;border-radius:3px;flex:none}
+.dot.site{background:var(--site)}
+.dot.server{background:var(--server)}
+.dot.acc{background:var(--accent)}
+
+.tw{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:14.5px}
+th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line-strong);
+  background:var(--surface-2);white-space:nowrap;font-family:"Cascadia Mono",Consolas,monospace}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;
+  line-height:1.45;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:none}
+td:first-child{color:var(--ink);font-weight:600}
+
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:16px 20px;border-radius:0 6px 6px 0;margin:24px 0}
+.callout p{margin:0;color:var(--ink-2)}
+.callout p+p{margin-top:11px}
+.callout.warn{border-left-color:var(--bad);background:var(--bad-soft)}
+
+.steps{display:flex;flex-direction:column;gap:12px;margin:24px 0}
+.stepc{display:grid;grid-template-columns:46px minmax(0,1fr);gap:16px;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:17px 20px;box-shadow:var(--shadow)}
+.stepc .n{font-family:"Cascadia Mono",Consolas,monospace;font-size:19px;
+  font-weight:600;color:var(--accent)}
+.stepc h4{margin:0 0 4px;font-size:16.5px}
+.stepc p{margin:0;font-size:15.5px}
+.stepc .why{margin-top:8px;font-size:14px;color:var(--muted);padding-left:13px;
+  border-left:2px solid var(--line-strong)}
+
+.cards{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));margin:22px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:16px 18px;box-shadow:var(--shadow)}
+.card h4{margin:0 0 5px;font-size:15.5px}
+.card p{margin:0;font-size:14.5px}
+
+footer{margin-top:70px;padding-top:24px;border-top:1px solid var(--line);
+  font-size:14.5px;color:var(--muted)}
+footer a{color:var(--accent)}
+
+@media (max-width:1060px){
+  :root{--rail:0px}
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{display:none}
+  .main{padding:0 22px 80px}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  header{padding-top:44px}
+  .stepc{grid-template-columns:34px minmax(0,1fr);gap:12px}
+  .figbox{padding:16px 12px 12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="shell">
+<aside class="rail">
+  <div class="rail-mark">ExpressVision</div>
+  <div class="rail-sub">Blueprint</div>
+  <nav id="toc">
+    <a href="#what"><i>01</i>What it does</a>
+    <a href="#system"><i>02</i>System architecture</a>
+    <a href="#dataflow"><i>03</i>How data moves</a>
+    <a href="#workflow"><i>04</i>Who does what, when</a>
+    <a href="#steps"><i>05</i>The seven steps</a>
+    <a href="#modules"><i>06</i>What each part does</a>
+    <a href="#cameras"><i>07</i>What cameras need</a>
+    <a href="#detects"><i>08</i>What it looks for</a>
+    <a href="#analytics"><i>09</i>What it works out</a>
+    <a href="#alerts"><i>10</i>When it tells you</a>
+    <a href="#evidence"><i>11</i>Proof and privacy</a>
+    <a href="#learning"><i>12</i>How it improves</a>
+    <a href="#hardware"><i>13</i>What it runs on</a>
+    <a href="#status"><i>14</i>Where we are</a>
+  </nav>
+</aside>
+
+<main class="main">
+
+<header class="col">
+  <p class="eyebrow">Express Pesticides &middot; the whole system, drawn out</p>
+  <h1>ExpressVision, explained end to end</h1>
+  <p class="lede">Everything in the technical architecture, said in plain words and drawn as pictures. What each part does, where it runs, and how the pieces connect.</p>
+  <div class="note">A companion to <b>architecture.html</b>, which is the formal specification. Same system, same decisions &mdash; this version explains rather than specifies.</div>
+</header>
+
+<!-- 01 -->
+<section id="what">
+  <div class="col">
+    <div class="head"><span class="num">01</span><h2>What it does</h2></div>
+    <p>Buildings already have security cameras recording all night. Rats and mice come out at night. Nobody watches the footage, so nobody finds out until the problem is large.</p>
+    <p><strong>ExpressVision watches the footage instead.</strong> It runs alongside the cameras that are already there, spots pests, follows them, saves proof, and tells someone.</p>
+    <p>It does four things:</p>
+  </div>
+  <div class="cards">
+    <div class="card"><h4>Watches</h4><p>Every camera, every night, without getting tired.</p></div>
+    <div class="card"><h4>Recognises</h4><p>Tells a rat from a cat from a plastic bag blowing past.</p></div>
+    <div class="card"><h4>Records</h4><p>Saves a video clip and a photo as proof, with the time and place.</p></div>
+    <div class="card"><h4>Reports</h4><p>Where they come in, when they are active, whether it is getting worse.</p></div>
+  </div>
+  <div class="col">
+    <p>It is <strong>passive</strong>. It does not control the cameras, does not use bait or traps, and does not interrupt anything. It can be installed in a working food plant on a Tuesday without shutting anything down.</p>
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="system">
+  <div class="col">
+    <div class="head"><span class="num">02</span><h2>System architecture &mdash; what runs where</h2></div>
+    <p>The system has two halves. One sits <strong>inside the building</strong>. One sits <strong>on a server</strong>, either in the cloud or in the client's own server room.</p>
+    <p>The split matters: everything needed to <em>catch</em> a pest is in the building. The server only collects, analyses and presents. If the internet goes down, the site keeps working.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 1080 620" role="img" aria-label="System architecture. On the left, inside the building: cameras and sensors feed a small edge computer that decodes video, checks for movement, cuts out patches, identifies objects, follows them, decides, and stores clips. On the right, across the internet link, a server holds the database, file storage, analysis jobs, alert rules and report generation, feeding a dashboard, phone alerts and PDF reports." style="color:var(--ink-2)">
+        <defs>
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="currentColor"/></marker>
+          <marker id="ars" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="var(--site)"/></marker>
+          <marker id="arv" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="var(--server)"/></marker>
+        </defs>
+
+        <!-- site zone -->
+        <rect x="8" y="30" width="590" height="574" rx="10" fill="var(--site-soft)" stroke="var(--site)" stroke-width="1.5"/>
+        <text x="26" y="56" font-size="15" font-weight="700" fill="var(--site)">INSIDE THE BUILDING</text>
+        <text x="26" y="76" font-size="12.5" fill="var(--muted)">keeps working even with no internet</text>
+
+        <!-- inputs -->
+        <rect x="26" y="96" width="150" height="58" rx="6" fill="var(--surface)" stroke="var(--line-strong)"/>
+        <text x="40" y="120" font-size="13.5" font-weight="650" fill="currentColor">Existing cameras</text>
+        <text x="40" y="139" font-size="11.5" fill="var(--muted)">the ones already there</text>
+
+        <rect x="26" y="164" width="150" height="58" rx="6" fill="var(--surface)" stroke="var(--line-strong)"/>
+        <text x="40" y="188" font-size="13.5" font-weight="650" fill="currentColor">Extra pest cameras</text>
+        <text x="40" y="207" font-size="11.5" fill="var(--muted)">low down, where needed</text>
+
+        <rect x="26" y="232" width="150" height="58" rx="6" fill="var(--surface)" stroke="var(--line-strong)"/>
+        <text x="40" y="256" font-size="13.5" font-weight="650" fill="currentColor">Sensors</text>
+        <text x="40" y="275" font-size="11.5" fill="var(--muted)">temperature, doors</text>
+
+        <!-- edge computer -->
+        <rect x="212" y="96" width="366" height="380" rx="8" fill="var(--surface)" stroke="var(--site)" stroke-width="1.5"/>
+        <text x="230" y="122" font-size="14" font-weight="700" fill="var(--site)">Small computer in the building</text>
+        <text x="230" y="140" font-size="11.5" fill="var(--muted)">about the size of a paperback &middot; handles 8&ndash;16 cameras</text>
+
+        <g font-size="12.5">
+          <rect x="230" y="154" width="160" height="46" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="242" y="172" font-weight="650" fill="currentColor">1. Read the video</text>
+          <text x="242" y="190" font-size="11" fill="var(--muted)">turn the stream into pictures</text>
+
+          <rect x="400" y="154" width="160" height="46" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="412" y="172" font-weight="650" fill="currentColor">2. Did anything move?</text>
+          <text x="412" y="190" font-size="11" fill="var(--muted)">throws away 96%</text>
+
+          <rect x="230" y="210" width="160" height="46" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="242" y="228" font-weight="650" fill="currentColor">3. Cut out that bit</text>
+          <text x="242" y="246" font-size="11" fill="var(--muted)">full quality, no shrinking</text>
+
+          <rect x="400" y="210" width="160" height="46" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="412" y="228" font-weight="650" fill="currentColor">4. What is it?</text>
+          <text x="412" y="246" font-size="11" fill="var(--muted)">rat, cat, bird, person</text>
+
+          <rect x="230" y="266" width="160" height="46" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="242" y="284" font-weight="650" fill="currentColor">5. Follow it</text>
+          <text x="242" y="302" font-size="11" fill="var(--muted)">across many pictures</text>
+
+          <rect x="400" y="266" width="160" height="46" rx="5" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="412" y="284" font-weight="650" fill="currentColor">6. Real or not?</text>
+          <text x="412" y="302" font-size="11" fill="var(--muted)">throws away 93% more</text>
+
+          <rect x="230" y="322" width="330" height="46" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="242" y="340" font-weight="650" fill="var(--accent)">7. Save the proof and raise the alarm</text>
+          <text x="242" y="358" font-size="11" fill="var(--muted)">clip, photo, time, place, path</text>
+
+          <rect x="230" y="382" width="160" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="242" y="400" font-weight="650" fill="currentColor">Rolling memory</text>
+          <text x="242" y="418" font-size="11" fill="var(--muted)">last 2 min per camera</text>
+
+          <rect x="400" y="382" width="160" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="412" y="400" font-weight="650" fill="currentColor">Waiting room</text>
+          <text x="412" y="418" font-size="11" fill="var(--muted)">holds data if net is down</text>
+
+          <text x="230" y="452" font-size="12" fill="var(--site)">◆ steps 1&ndash;7 all happen here, with no internet needed</text>
+        </g>
+
+        <!-- arrows into edge -->
+        <g stroke="var(--site)" marker-end="url(#ars)">
+          <line x1="178" y1="124" x2="206" y2="150"/>
+          <line x1="178" y1="192" x2="206" y2="176"/>
+          <line x1="178" y1="260" x2="206" y2="200"/>
+        </g>
+
+        <!-- boundary -->
+        <line x1="622" y1="24" x2="622" y2="610" stroke="var(--line-strong)" stroke-dasharray="6 5"/>
+        <text x="630" y="600" font-size="12" fill="var(--muted)">internet link</text>
+
+        <!-- server zone -->
+        <rect x="650" y="30" width="422" height="380" rx="10" fill="var(--server-soft)" stroke="var(--server)" stroke-width="1.5"/>
+        <text x="668" y="56" font-size="15" font-weight="700" fill="var(--server)">ON THE SERVER</text>
+        <text x="668" y="76" font-size="12.5" fill="var(--muted)">cloud, or the client's own server room</text>
+
+        <g font-size="12.5">
+          <rect x="668" y="96" width="184" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="680" y="114" font-weight="650" fill="currentColor">Receiving desk</text>
+          <text x="680" y="132" font-size="11" fill="var(--muted)">takes in what sites send</text>
+
+          <rect x="866" y="96" width="188" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="878" y="114" font-weight="650" fill="currentColor">File storage</text>
+          <text x="878" y="132" font-size="11" fill="var(--muted)">clips and photos</text>
+
+          <rect x="668" y="152" width="184" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="680" y="170" font-weight="650" fill="currentColor">Database</text>
+          <text x="680" y="188" font-size="11" fill="var(--muted)">every sighting, ever</text>
+
+          <rect x="866" y="152" width="188" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="878" y="170" font-weight="650" fill="currentColor">Sensor readings</text>
+          <text x="878" y="188" font-size="11" fill="var(--muted)">temperature over time</text>
+
+          <rect x="668" y="208" width="184" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="680" y="226" font-weight="650" fill="currentColor">Alert rules</text>
+          <text x="680" y="244" font-size="11" fill="var(--muted)">who to tell, and when</text>
+
+          <rect x="866" y="208" width="188" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="878" y="226" font-weight="650" fill="currentColor">Analysis jobs</text>
+          <text x="878" y="244" font-size="11" fill="var(--muted)">trends, hot spots</text>
+
+          <rect x="668" y="264" width="386" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="680" y="282" font-weight="650" fill="currentColor">Report maker &amp; recommendations</text>
+          <text x="680" y="300" font-size="11" fill="var(--muted)">turns findings into "go and check the dock door seal"</text>
+
+          <rect x="668" y="320" width="386" height="46" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="680" y="338" font-weight="650" fill="currentColor">Training workshop</text>
+          <text x="680" y="356" font-size="11" fill="var(--muted)">where the recogniser is taught and improved</text>
+
+          <text x="668" y="390" font-size="12" fill="var(--server)">◆ none of this is needed for a site to catch a pest</text>
+        </g>
+
+        <!-- people zone -->
+        <text x="650" y="452" font-size="15" font-weight="700" fill="var(--accent)">FOR PEOPLE</text>
+        <g font-size="12.5">
+          <rect x="650" y="466" width="128" height="52" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="662" y="486" font-weight="650" fill="currentColor">Dashboard</text>
+          <text x="662" y="504" font-size="11" fill="var(--muted)">live view, review</text>
+
+          <rect x="788" y="466" width="128" height="52" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="800" y="486" font-weight="650" fill="currentColor">Phone alerts</text>
+          <text x="800" y="504" font-size="11" fill="var(--muted)">WhatsApp, SMS</text>
+
+          <rect x="926" y="466" width="128" height="52" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="938" y="486" font-weight="650" fill="currentColor">PDF reports</text>
+          <text x="938" y="504" font-size="11" fill="var(--muted)">weekly, monthly</text>
+        </g>
+
+        <!-- crossing arrows -->
+        <line x1="580" y1="336" x2="662" y2="118" stroke="var(--server)" marker-end="url(#arv)"/>
+        <text x="470" y="500" font-size="12" fill="var(--server)">sends small messages (2 KB each) and clips (4 MB each)</text>
+        <line x1="580" y1="400" x2="616" y2="470" stroke="var(--muted)" stroke-dasharray="4 3"/>
+        <text x="230" y="500" font-size="12" fill="var(--muted)">if the link is down, it waits here and catches up later</text>
+
+        <line x1="760" y1="366" x2="726" y2="460" stroke="var(--accent)" marker-end="url(#ar)" opacity=".7"/>
+        <line x1="860" y1="366" x2="856" y2="460" stroke="var(--accent)" marker-end="url(#ar)" opacity=".7"/>
+        <line x1="960" y1="366" x2="986" y2="460" stroke="var(--accent)" marker-end="url(#ar)" opacity=".7"/>
+      </svg>
+    </div>
+    <figcaption><b>Figure 1 &mdash; Where everything lives.</b> The dashed line is the only fragile part. Everything left of it &mdash; spotting, recognising, following, deciding, recording, and even sounding a local alarm &mdash; happens inside the building on a small computer. The server on the right collects and makes sense of it all, but a site with a dead internet connection carries on working and sends everything once the link returns.</figcaption>
+    <div class="key">
+      <span><i class="dot site"></i>runs in the building</span>
+      <span><i class="dot server"></i>runs on the server</span>
+      <span><i class="dot acc"></i>what people see</span>
+    </div>
+  </figure>
+</section>
+
+<!-- 03 -->
+<section id="dataflow">
+  <div class="col">
+    <div class="head"><span class="num">03</span><h2>How data moves</h2></div>
+    <p>This is the same journey, but following the <em>data</em> rather than the boxes. At each step the data changes shape and gets much smaller.</p>
+    <p>The numbers are for one camera over one night. They are the whole point: the system's job is to get from 650,000 down to 3 without losing the rat.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 1060 640" role="img" aria-label="Data flow diagram. Video frames become moving regions, then picture patches, then detections, then tracks, then confirmed events, then merged incidents, then alerts. Along the way data is written to the rolling memory, the clip store, the sightings database and the training set." style="color:var(--ink-2)">
+        <defs>
+          <marker id="d1" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="var(--accent)"/></marker>
+          <marker id="d2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,1 8,4 0,7" fill="var(--muted)"/></marker>
+        </defs>
+
+        <text x="10" y="20" font-family="Cascadia Mono, Consolas, monospace" font-size="11" letter-spacing="1.2" fill="var(--muted)">DATA — ONE CAMERA, ONE NIGHT</text>
+
+        <!-- process chain -->
+        <g font-size="13">
+          <rect x="10" y="38" width="188" height="54" rx="6" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="24" y="60" font-weight="650" fill="currentColor">Video frames</text>
+          <text x="24" y="80" font-size="11.5" fill="var(--muted)">650,000 pictures</text>
+
+          <rect x="10" y="122" width="188" height="54" rx="6" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="24" y="144" font-weight="650" fill="currentColor">Moving regions</text>
+          <text x="24" y="164" font-size="11.5" fill="var(--muted)">26,000 &mdash; where something changed</text>
+
+          <rect x="10" y="206" width="188" height="54" rx="6" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="24" y="228" font-weight="650" fill="currentColor">Picture patches</text>
+          <text x="24" y="248" font-size="11.5" fill="var(--muted)">25,000 small cut-outs</text>
+
+          <rect x="10" y="290" width="188" height="54" rx="6" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="24" y="312" font-weight="650" fill="currentColor">Guesses</text>
+          <text x="24" y="332" font-size="11.5" fill="var(--muted)">4,000 &mdash; "this might be a rat"</text>
+
+          <rect x="10" y="374" width="188" height="54" rx="6" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="24" y="396" font-weight="650" fill="currentColor">Trails</text>
+          <text x="24" y="416" font-size="11.5" fill="var(--muted)">350 &mdash; things followed over time</text>
+
+          <rect x="10" y="458" width="188" height="54" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="24" y="480" font-weight="650" fill="var(--accent)">Confirmed sightings</text>
+          <text x="24" y="500" font-size="11.5" fill="var(--muted)">25 &mdash; really were animals</text>
+
+          <rect x="10" y="542" width="188" height="54" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="24" y="564" font-weight="650" fill="var(--accent)">Alerts</text>
+          <text x="24" y="584" font-size="11.5" fill="var(--muted)">3 &mdash; worth waking someone for</text>
+        </g>
+
+        <!-- chain arrows with process labels -->
+        <g stroke="var(--accent)" marker-end="url(#d1)">
+          <line x1="104" y1="92" x2="104" y2="118"/>
+          <line x1="104" y1="176" x2="104" y2="202"/>
+          <line x1="104" y1="260" x2="104" y2="286"/>
+          <line x1="104" y1="344" x2="104" y2="370"/>
+          <line x1="104" y1="428" x2="104" y2="454"/>
+          <line x1="104" y1="512" x2="104" y2="538"/>
+        </g>
+
+        <g font-size="12" fill="var(--accent)">
+          <text x="216" y="112">check for movement</text>
+          <text x="216" y="196">cut out at full quality</text>
+          <text x="216" y="280">ask the recogniser</text>
+          <text x="216" y="364">join up across pictures</text>
+          <text x="216" y="448">did it really go somewhere?</text>
+          <text x="216" y="532">apply the alert rules</text>
+        </g>
+
+        <!-- stores column -->
+        <text x="600" y="20" font-family="Cascadia Mono, Consolas, monospace" font-size="11" letter-spacing="1.2" fill="var(--muted)">WHERE THINGS GET SAVED</text>
+
+        <g font-size="12.5">
+          <path d="M600 38 h300 v46 h-300" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <line x1="600" y1="38" x2="600" y2="84" stroke="var(--line-strong)" stroke-width="2.5"/>
+          <text x="616" y="58" font-weight="650" fill="currentColor">Rolling memory (in the building)</text>
+          <text x="616" y="76" font-size="11" fill="var(--muted)">last 2 minutes of every camera, always</text>
+
+          <path d="M600 206 h300 v46 h-300" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <line x1="600" y1="206" x2="600" y2="252" stroke="var(--line-strong)" stroke-width="2.5"/>
+          <text x="616" y="226" font-weight="650" fill="currentColor">Rejected trails + reasons</text>
+          <text x="616" y="244" font-size="11" fill="var(--muted)">kept on purpose — they teach the system what to ignore</text>
+
+          <path d="M600 374 h300 v46 h-300" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <line x1="600" y1="374" x2="600" y2="420" stroke="var(--line-strong)" stroke-width="2.5"/>
+          <text x="616" y="394" font-weight="650" fill="currentColor">Clip &amp; photo store</text>
+          <text x="616" y="412" font-size="11" fill="var(--muted)">the proof, with a tamper-proof fingerprint</text>
+
+          <path d="M600 458 h300 v46 h-300" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <line x1="600" y1="458" x2="600" y2="504" stroke="var(--line-strong)" stroke-width="2.5"/>
+          <text x="616" y="478" font-weight="650" fill="currentColor">Sightings database</text>
+          <text x="616" y="496" font-size="11" fill="var(--muted)">every event, forever — this is what reports read</text>
+
+          <path d="M600 542 h300 v46 h-300" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <line x1="600" y1="542" x2="600" y2="588" stroke="var(--line-strong)" stroke-width="2.5"/>
+          <text x="616" y="562" font-weight="650" fill="currentColor">Training set</text>
+          <text x="616" y="580" font-size="11" fill="var(--muted)">examples a human has checked — makes it better next month</text>
+        </g>
+
+        <g stroke="var(--muted)" marker-end="url(#d2)" stroke-dasharray="4 3">
+          <line x1="200" y1="60" x2="594" y2="60"/>
+          <line x1="200" y1="400" x2="594" y2="228"/>
+          <line x1="200" y1="482" x2="594" y2="394"/>
+          <line x1="200" y1="490" x2="594" y2="478"/>
+          <line x1="200" y1="500" x2="594" y2="560"/>
+        </g>
+
+        <line x1="10" y1="614" x2="1050" y2="614" stroke="var(--line)"/>
+        <text x="10" y="632" font-family="Cascadia Mono, Consolas, monospace" font-size="10.5" fill="var(--muted)">solid amber = the main journey · dashed grey = a copy written to storage</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 2 &mdash; The data, and where copies of it are kept.</b> Two things worth noticing. The <b>rolling memory</b> holds the last two minutes of every camera at all times, which is how a clip can begin <em>before</em> the rat walked in. And the <b>rejected trails are saved deliberately</b> &mdash; knowing what a swaying plant looks like is just as valuable for teaching the system as knowing what a rat looks like, and throwing those away would mean collecting them all over again later.</figcaption>
+  </figure>
+</section>
+
+<!-- 04 -->
+<section id="workflow">
+  <div class="col">
+    <div class="head"><span class="num">04</span><h2>Who does what, when</h2></div>
+    <p>The software is only half the system. The other half is people. This is how a single rat sighting travels from a camera at 2 a.m. to a sealed gap in a wall.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 1080 480" role="img" aria-label="Workflow across four lanes over time. Overnight the system detects and records automatically. In the morning a reviewer confirms or rejects each sighting. Urgent cases go to a technician who inspects and treats the site. Weekly the client receives a report, and every confirmation feeds back into teaching the system." style="color:var(--ink-2)">
+        <defs>
+          <marker id="w1" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="var(--accent)"/></marker>
+          <marker id="w2" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,1 9,4.5 0,8" fill="var(--site)"/></marker>
+        </defs>
+
+        <!-- time header -->
+        <g font-family="Cascadia Mono, Consolas, monospace" font-size="11" fill="var(--muted)">
+          <text x="196" y="22">OVERNIGHT</text>
+          <text x="420" y="22">NEXT MORNING</text>
+          <text x="640" y="22">SAME DAY</text>
+          <text x="856" y="22">EACH WEEK</text>
+        </g>
+        <line x1="180" y1="30" x2="1070" y2="30" stroke="var(--line)"/>
+
+        <!-- lanes -->
+        <g font-size="13" font-weight="650">
+          <rect x="10" y="40" width="166" height="96" rx="6" fill="var(--site-soft)" stroke="var(--site)"/>
+          <text x="24" y="70" fill="var(--site)">The system</text>
+          <text x="24" y="90" font-size="11" font-weight="400" fill="var(--muted)">automatic</text>
+          <text x="24" y="106" font-size="11" font-weight="400" fill="var(--muted)">every night</text>
+
+          <rect x="10" y="146" width="166" height="96" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="24" y="176" fill="var(--accent)">Reviewer</text>
+          <text x="24" y="196" font-size="11" font-weight="400" fill="var(--muted)">about 20 minutes</text>
+          <text x="24" y="212" font-size="11" font-weight="400" fill="var(--muted)">a day</text>
+
+          <rect x="10" y="252" width="166" height="96" rx="6" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+          <text x="24" y="282" fill="currentColor">Pest technician</text>
+          <text x="24" y="302" font-size="11" font-weight="400" fill="var(--muted)">on the next</text>
+          <text x="24" y="318" font-size="11" font-weight="400" fill="var(--muted)">site visit</text>
+
+          <rect x="10" y="358" width="166" height="96" rx="6" fill="var(--server-soft)" stroke="var(--server)"/>
+          <text x="24" y="388" fill="var(--server)">Client manager</text>
+          <text x="24" y="408" font-size="11" font-weight="400" fill="var(--muted)">reads the report</text>
+        </g>
+
+        <!-- lane 1 -->
+        <g font-size="12">
+          <rect x="190" y="50" width="130" height="52" rx="5" fill="var(--surface)" stroke="var(--site)"/>
+          <text x="202" y="70" font-weight="650" fill="currentColor">Spots a rat</text>
+          <text x="202" y="88" font-size="10.5" fill="var(--muted)">02:14, dock door</text>
+
+          <rect x="340" y="50" width="130" height="52" rx="5" fill="var(--surface)" stroke="var(--site)"/>
+          <text x="352" y="70" font-weight="650" fill="currentColor">Saves the proof</text>
+          <text x="352" y="88" font-size="10.5" fill="var(--muted)">clip + photo + path</text>
+
+          <rect x="490" y="50" width="130" height="52" rx="5" fill="var(--surface)" stroke="var(--site)"/>
+          <text x="502" y="70" font-weight="650" fill="currentColor">Sends the alert</text>
+          <text x="502" y="88" font-size="10.5" fill="var(--muted)">if rules say so</text>
+        </g>
+
+        <!-- lane 2 -->
+        <g font-size="12">
+          <rect x="400" y="156" width="150" height="52" rx="5" fill="var(--surface)" stroke="var(--accent)"/>
+          <text x="412" y="176" font-weight="650" fill="currentColor">Checks each one</text>
+          <text x="412" y="194" font-size="10.5" fill="var(--muted)">yes / no / wrong animal</text>
+
+          <rect x="570" y="156" width="150" height="52" rx="5" fill="var(--surface)" stroke="var(--accent)"/>
+          <text x="582" y="176" font-weight="650" fill="currentColor">Flags the urgent ones</text>
+          <text x="582" y="194" font-size="10.5" fill="var(--muted)">food areas first</text>
+        </g>
+
+        <!-- lane 3 -->
+        <g font-size="12">
+          <rect x="620" y="262" width="150" height="52" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="632" y="282" font-weight="650" fill="currentColor">Goes to that spot</text>
+          <text x="632" y="300" font-size="10.5" fill="var(--muted)">not the whole building</text>
+
+          <rect x="790" y="262" width="150" height="52" rx="5" fill="var(--surface)" stroke="var(--line-strong)"/>
+          <text x="802" y="282" font-weight="650" fill="currentColor">Seals gap, sets traps</text>
+          <text x="802" y="300" font-size="10.5" fill="var(--muted)">and records what he did</text>
+        </g>
+
+        <!-- lane 4 -->
+        <g font-size="12">
+          <rect x="850" y="368" width="200" height="52" rx="5" fill="var(--surface)" stroke="var(--server)"/>
+          <text x="862" y="388" font-weight="650" fill="currentColor">Gets the weekly report</text>
+          <text x="862" y="406" font-size="10.5" fill="var(--muted)">trends, hot spots, what to do</text>
+        </g>
+
+        <!-- arrows -->
+        <g stroke="var(--accent)" marker-end="url(#w1)">
+          <line x1="322" y1="76" x2="336" y2="76"/>
+          <line x1="472" y1="76" x2="486" y2="76"/>
+          <path d="M555 102 C 555 130, 490 130, 476 152" fill="none"/>
+          <line x1="552" y1="182" x2="566" y2="182"/>
+          <path d="M660 210 C 660 234, 700 238, 700 258" fill="none"/>
+          <line x1="772" y1="288" x2="786" y2="288"/>
+          <path d="M900 316 C 900 340, 940 344, 940 364" fill="none"/>
+        </g>
+
+        <!-- feedback loop -->
+        <path d="M470 208 C 470 234, 300 240, 300 130 L 300 108" fill="none" stroke="var(--site)" stroke-dasharray="5 4" marker-end="url(#w2)"/>
+        <text x="196" y="238" font-size="12" font-weight="650" fill="var(--site)">every yes/no teaches the system</text>
+        <text x="196" y="256" font-size="11" fill="var(--muted)">it gets better at this site every month</text>
+
+        <line x1="10" y1="466" x2="1070" y2="466" stroke="var(--line)"/>
+      </svg>
+    </div>
+    <figcaption><b>Figure 3 &mdash; From camera to sealed gap.</b> The green dashed line going backwards is the part that makes this different from a normal alarm system. Every time the reviewer says "yes that was a rat" or "no that was a shadow", the system learns from it. After a few months it knows what <em>this particular building</em> looks like, and gets noticeably better at it. The technician's job also changes shape: instead of walking the whole site looking for signs, they are sent to a specific spot with a video of what happened there.</figcaption>
+  </figure>
+</section>
+
+<!-- 05 -->
+<section id="steps">
+  <div class="col">
+    <div class="head"><span class="num">05</span><h2>The seven steps in detail</h2></div>
+    <p>Each step exists to throw away work so the next step is affordable. That is the whole trick.</p>
+  </div>
+
+  <div class="steps col">
+    <div class="stepc"><div class="n">1</div><div>
+      <h4>Read the video</h4>
+      <p>Connect to the camera and turn its stream into individual pictures. We always take the camera's <strong>best-quality stream</strong>, never the low-quality backup one.</p>
+      <p class="why">The backup stream is about a quarter the size. A rat in it is roughly a dozen dots across &mdash; too small for anything to recognise, ever.</p>
+    </div></div>
+
+    <div class="stepc"><div class="n">2</div><div>
+      <h4>Check whether anything moved</h4>
+      <p>Compare each picture with what the scene normally looks like. If nothing changed, throw it away immediately.</p>
+      <p class="why">This also has to be clever about two things: someone switching the lights on (everything changes at once &mdash; not a pest), and a spider building a web over the lens (the picture goes soft &mdash; that raises a maintenance warning, because a blind camera looks exactly like a camera with no pests).</p>
+    </div></div>
+
+    <div class="stepc"><div class="n">3</div><div>
+      <h4>Cut out the moving bit at full quality</h4>
+      <p>Take a small square from the full-size picture around whatever moved, without shrinking it.</p>
+      <p class="why">The usual approach shrinks the whole picture to a standard small size. That is fine for people and cars, and fatal for rats &mdash; a rat that was 40 dots across becomes 13, and nothing can work with that.</p>
+    </div></div>
+
+    <div class="stepc"><div class="n">4</div><div>
+      <h4>Ask what it is</h4>
+      <p>The recogniser looks at the cut-out square and says what it thinks: rat, mouse, bird, cat, dog, lizard, snake, insect, person &mdash; or nothing interesting.</p>
+      <p class="why">It only answers as precisely as the picture allows. If the animal is small and blurry it says "a rodent" rather than guessing "a rat", because a confident wrong answer costs more trust than an honest vague one.</p>
+    </div></div>
+
+    <div class="stepc"><div class="n">5</div><div>
+      <h4>Follow it across pictures</h4>
+      <p>Join up the same animal from one picture to the next, building a trail.</p>
+      <p class="why">This is harder than it sounds for a rat. It moves further than its own body length between pictures, so its position in one picture and the next do not overlap at all &mdash; the system has to predict where it went.</p>
+    </div></div>
+
+    <div class="stepc"><div class="n">6</div><div>
+      <h4>Decide whether it was real</h4>
+      <p>Look at the whole trail and ask: did this thing actually cover ground? Did it move the way a living creature moves?</p>
+      <p class="why">A plant swaying in a draught moves constantly but stays in one spot. A rat crosses the room. This single test removes about 93% of the false alarms that would otherwise reach someone.</p>
+    </div></div>
+
+    <div class="stepc"><div class="n">7</div><div>
+      <h4>Save the proof and raise the alarm</h4>
+      <p>Cut a video clip from the rolling memory, save a photo with the animal marked, record the time, camera, and the path it walked. Then apply the alert rules and notify whoever should know.</p>
+      <p class="why">If the same animal was seen by three overlapping cameras, it is merged into one sighting first &mdash; otherwise every count in every report would be inflated.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="modules">
+  <div class="col">
+    <div class="head"><span class="num">06</span><h2>What each part of the software does</h2></div>
+    <p>The names of the actual files, and which step each one handles. Useful if you are looking at the code or explaining who built what.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Part</th><th>Step</th><th>What it does</th><th>Runs</th></tr></thead>
+      <tbody>
+        <tr><td>sources</td><td>1</td><td>Connects to video files and live cameras. Reconnects by itself if a camera reboots at 3 a.m.</td><td>Building</td></tr>
+        <tr><td>gate</td><td>2</td><td>The movement check. Also spots light switches and dirty lenses.</td><td>Building</td></tr>
+        <tr><td>tiling</td><td>3</td><td>Cuts out the moving bit at full quality and remembers where it came from.</td><td>Building</td></tr>
+        <tr><td>detect</td><td>4</td><td>The recogniser. Swappable, so the model can be replaced without touching anything else.</td><td>Building</td></tr>
+        <tr><td>tracking</td><td>5</td><td>Joins the same animal up across pictures into a trail.</td><td>Building</td></tr>
+        <tr><td>validator</td><td>6</td><td>The false-alarm filter. Decides whether a trail was really an animal.</td><td>Building</td></tr>
+        <tr><td>ringbuffer</td><td>7</td><td>Holds the last two minutes of every camera, so clips can start before the animal appeared.</td><td>Building</td></tr>
+        <tr><td>assembler</td><td>7</td><td>Builds the evidence package: clip, photo, path, time, tamper-proof fingerprint.</td><td>Building</td></tr>
+        <tr><td>pipeline</td><td>1&ndash;7</td><td>Wires all the above together and keeps the running totals.</td><td>Building</td></tr>
+        <tr><td>store</td><td>&mdash;</td><td>The database. Every sighting, every rejection, every human decision.</td><td>Both</td></tr>
+        <tr><td>review</td><td>&mdash;</td><td>The page a reviewer uses to confirm or reject sightings quickly.</td><td>Server</td></tr>
+        <tr><td>survey</td><td>&mdash;</td><td>Checks whether a camera can physically see a rat, before anything is installed.</td><td>Setup</td></tr>
+        <tr><td>benchmark</td><td>&mdash;</td><td>Measures how many cameras one computer can handle.</td><td>Setup</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="cameras">
+  <div class="col">
+    <div class="head"><span class="num">07</span><h2>What the cameras need to be</h2></div>
+    <p>This decides how well everything else can possibly work, and it is set by hardware, not software. No amount of clever code invents detail the camera never captured.</p>
+
+    <h3>Big enough</h3>
+    <p>A rat needs to be at least <strong>40 dots across</strong> before anything can spot it, and <strong>80 dots</strong> before we can say confidently which species it is. How far away that is depends on the camera:</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Camera</th><th>Lens</th><th>Can spot a rat up to</th><th>Can identify it up to</th></tr></thead>
+      <tbody>
+        <tr><td>2 MP</td><td>wide (2.8 mm)</td><td>5 m</td><td>2.5 m</td></tr>
+        <tr><td>2 MP</td><td>medium (6 mm)</td><td>12 m</td><td>6 m</td></tr>
+        <tr><td>4 MP</td><td>wide (4 mm)</td><td>10 m</td><td>5 m</td></tr>
+        <tr><td>4 MP</td><td>narrow (8 mm)</td><td>22 m</td><td>11 m</td></tr>
+        <tr><td>8 MP / 4K</td><td>wide (4 mm)</td><td>15 m</td><td>7.5 m</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <h3>Fast enough</h3>
+    <p>Cameras take a fraction of a second to capture each picture. At night, most cameras slow this down to let more light in &mdash; often to an eighth of a second. In that time a running rat travels several centimetres, so it comes out as a <strong>streak instead of a shape</strong>.</p>
+
+    <div class="callout warn">
+      <p><strong>This is the most common reason pest detection fails on existing cameras, and it usually costs nothing to fix.</strong> The camera needs to be set to no slower than 1/250th of a second at night. That normally means adding a bit more infrared light so the picture stays bright enough &mdash; a setting change and sometimes a small lamp.</p>
+    </div>
+
+    <h3>Pointed at the right thing</h3>
+    <p>Security cameras are mounted high and aimed at people's faces. Pests are on the floor, hugging walls. So some sites will need a few <strong>extra low-mounted cameras</strong> looking along wall-floor junctions, doorways, drains and around bait stations.</p>
+    <p>We check all of this on the first footage from a site, before promising anything. Some cameras will turn out to be unusable, and saying so in week one is far cheaper than in month six.</p>
+  </div>
+</section>
+
+<!-- 08 -->
+<section id="detects">
+  <div class="col">
+    <div class="head"><span class="num">08</span><h2>What it looks for</h2></div>
+    <p>It answers at three levels of detail, and only goes as deep as the picture supports.</p>
+  </div>
+
+  <div class="cards">
+    <div class="card"><h4>Level 1 &mdash; is anything there?</h4><p>Animal, person, vehicle, or just movement. Always answered.</p></div>
+    <div class="card"><h4>Level 2 &mdash; what kind?</h4><p>Rodent, bird, reptile, cat/dog, insect. Reliable once the animal is about 40 dots across.</p></div>
+    <div class="card"><h4>Level 3 &mdash; which species?</h4><p>Rat or mouse, gecko or snake. Only when the animal is big and clear in frame &mdash; otherwise it stays quiet rather than guessing.</p></div>
+  </div>
+
+  <div class="col">
+    <h3>Why it also detects people</h3>
+    <p>People are not pests, but the class earns its place four times over: it stops human shadows causing false alarms, it tells us whether activity happened during working hours, it lets faces be blurred automatically before any clip leaves the building, and it can prove a technician actually visited at 02:40.</p>
+
+    <h3>Insects &mdash; the honest version</h3>
+    <p>Flying insects cannot be reliably counted by a room camera. Close to the lens they are a huge blur; further away they are smaller than a single dot. There is no camera position that fixes this.</p>
+    <p>So we do two things that <em>do</em> work: report an <strong>activity level</strong> (is insect pressure going up in this area this week?) rather than a fake count, and point a close-up camera at the <strong>sticky board inside an insect light trap</strong>, where the insects are still, flat and evenly lit &mdash; and can genuinely be counted. That is also already the measurement the pest-control industry uses.</p>
+  </div>
+</section>
+
+<!-- 09 -->
+<section id="analytics">
+  <div class="col">
+    <div class="head"><span class="num">09</span><h2>What it works out</h2></div>
+    <p>One sighting is a fact. Thousands of sightings become answers.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Question</th><th>How it is answered</th></tr></thead>
+      <tbody>
+        <tr><td>How many?</td><td>Counted after merging sightings of the same animal across cameras.</td></tr>
+        <tr><td>Getting worse or better?</td><td>Compared against this site's own normal level, not a generic one.</td></tr>
+        <tr><td>What time of night?</td><td>All sightings placed on a 24-hour clock, per species and per area.</td></tr>
+        <tr><td>Which way did it go?</td><td>The direction from where the trail started to where it ended.</td></tr>
+        <tr><td>Where is worst?</td><td>Sightings per area, adjusted for how much of that area is covered.</td></tr>
+        <tr><td>Coming back to the same place?</td><td>Groups sightings by area <em>and</em> time of night across many days. The same spot at the same hour on six nights is a pattern.</td></tr>
+        <tr><td><strong>Where are they getting in?</strong></td><td>Collects the spot where each trail <em>first appears</em>. Over weeks these cluster, and the cluster is usually the gap.</td></tr>
+        <tr><td>Does weather affect it?</td><td>Sightings matched against temperature and door-open records from the sensors.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <div class="callout">
+      <p><strong>One safeguard worth knowing about.</strong> If a camera is broken for three nights it records zero sightings, and a naive report would show that as "no pest activity" &mdash; the most dangerous wrong answer possible in a food plant. So every count is divided by how long the camera was actually working, and any report covering a period with poor coverage says so on its front page.</p>
+    </div>
+
+    <h3>From findings to advice</h3>
+    <p>The reports end with specific recommendations, produced by rules written with Express Pesticides' own technicians &mdash; not invented by the software. For example:</p>
+    <p><em>"Rodents first appeared at the same point near the dock shutter on 11 of the last 14 nights, mostly between 01:40 and 03:10. Inspect the shutter seal and brush strip. Place snap traps along the east wall junction at 3 m spacing. Re-check in 14 nights."</em></p>
+    <p>Every recommendation comes with the clips that triggered it, so a technician can judge it rather than take it on faith.</p>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="alerts">
+  <div class="col">
+    <div class="head"><span class="num">10</span><h2>When it tells you</h2></div>
+    <p>Three kinds of alert: <strong>something just happened</strong>, <strong>this keeps happening in the same place</strong>, and <strong>this area is much busier than normal</strong>.</p>
+    <p>The hard part is not producing alerts. It is producing few enough that people still read them.</p>
+
+    <h3>Five things that keep the volume sane</h3>
+    <ul>
+      <li><strong>Only confident ones interrupt people.</strong> Uncertain sightings appear in the review list without notifying anyone.</li>
+      <li><strong>Cooling-off period.</strong> One rat crossing a doorway six times is one alert, not six.</li>
+      <li><strong>Automatic digest.</strong> Past a certain rate the channel switches to an hourly summary and says so. A real infestation should not produce a hundred notifications.</li>
+      <li><strong>Right person, right time.</strong> The night supervisor gets dock alerts at 3 a.m.; the account manager gets the morning summary.</li>
+      <li><strong>Escalation.</strong> An unacknowledged urgent alert goes to SMS, then to a phone call after 30 minutes.</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>The target that matters:</strong> fewer than one false alarm per camera every two nights. On a sixteen-camera site that is at most eight a night. Above that, clients mute the notifications and the system may as well not exist &mdash; so this number, not raw accuracy, is what the project is measured against.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="evidence">
+  <div class="col">
+    <div class="head"><span class="num">11</span><h2>Proof and privacy</h2></div>
+    <h3>What gets saved as proof</h3>
+    <ul>
+      <li>A video clip that starts <strong>8 seconds before</strong> the animal appeared and ends 5 seconds after it left</li>
+      <li>A photo with the animal outlined and its path drawn on</li>
+      <li>Site, camera, area, date and time, species, and how confident the system was</li>
+      <li>A digital fingerprint calculated the moment the clip is made, so it can be shown the file was never altered</li>
+    </ul>
+    <p>The outline is stored <em>alongside</em> the video rather than burned into it, and the clean original is kept. A box drawn onto a video is a claim the client cannot check; a clean clip plus separately recorded markings is proof they can. This matters for food-safety audits.</p>
+
+    <h3>Privacy</h3>
+    <p>Overnight footage in hospitals, hotels and homes contains people. So:</p>
+    <ul>
+      <li><strong>Faces are blurred automatically</strong> on any clip before it leaves the building</li>
+      <li><strong>Clips are deleted</strong> after 90 days by default; the summary data is kept for two years</li>
+      <li><strong>Access is controlled and logged</strong> &mdash; who watched which clip, and when</li>
+      <li><strong>Nothing has to leave the site at all</strong> if a client forbids it. The same software runs entirely on their own server.</li>
+    </ul>
+    <p>This is designed around India's Digital Personal Data Protection Act, and is worth a short legal review before the first hospital installation.</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="learning">
+  <div class="col">
+    <div class="head"><span class="num">12</span><h2>How it gets better</h2></div>
+    <p>The recogniser is not fixed at installation. It improves at each site over time, and the mechanism is deliberately simple.</p>
+    <p>Every sighting in the review screen has three buttons: <strong>yes that was a rat</strong>, <strong>no it was not</strong>, or <strong>it was actually a bird</strong>. That single control is the entire teaching pipeline.</p>
+    <ul>
+      <li>Every answer becomes a labelled example.</li>
+      <li>The <strong>"no" answers are the most valuable of all</strong> &mdash; they teach the system what to ignore, which is where most of the difficulty lives.</li>
+      <li>Once a month the recogniser is retrained on everything gathered, tested against a set of nights it has never seen, and only then rolled out.</li>
+      <li>Each site also gets its own sensitivity setting, tuned after a couple of weeks of real sightings. Sites differ enormously; one universal setting is wrong nearly everywhere.</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>Why the review screen shipped before the fancy dashboard:</strong> without it the system is frozen at whatever accuracy it launched with. With it, the system gets measurably better every month it runs, at every site it runs at.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section id="hardware">
+  <div class="col">
+    <div class="head"><span class="num">13</span><h2>What it runs on</h2></div>
+    <p>The computer inside the building is small, silent and has no moving parts. Size depends on how many cameras it handles.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Site size</th><th>Cameras</th><th>Computer</th><th>Typical building</th></tr></thead>
+      <tbody>
+        <tr><td>Small</td><td>2&ndash;6</td><td>Jetson Orin Nano</td><td>Restaurant, clinic, small residential block</td></tr>
+        <tr><td>Medium</td><td>8&ndash;16</td><td>Jetson Orin NX</td><td>Warehouse, hotel, small factory</td></tr>
+        <tr><td>Large</td><td>24&ndash;48</td><td>2&ndash;3 units, or a small server with a graphics card</td><td>Food plant, large logistics hub</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+  <div class="col">
+    <p>For large sites we prefer several small computers to one big one: it is cheaper per camera, and if one fails you lose a third of the site rather than all of it.</p>
+    <p>The server side starts deliberately small &mdash; a single machine handles the first several dozen sites, because all the heavy work already happened in the buildings.</p>
+
+    <h3>How much data moves</h3>
+    <p>Each sighting sends a tiny message (about 2 KB) and a video clip (about 4 MB). A busy site sends roughly <strong>800 MB overnight</strong> &mdash; fine on normal broadband, and manageable on mobile data. On a poor connection the system can send the messages immediately and the clips during the day.</p>
+  </div>
+</section>
+
+<!-- 14 -->
+<section id="status">
+  <div class="col">
+    <div class="head"><span class="num">14</span><h2>Where we are</h2></div>
+    <p>Steps 1 to 7 are built, tested and working. Cameras are read, movement is detected, patches are cut, things are followed, false alarms are filtered, proof is saved, and there is a screen for reviewing it all.</p>
+    <p><strong>One piece is missing: the recogniser has not been taught yet.</strong></p>
+    <p>It has to be taught on the kind of pictures it will actually see, and no collection exists of rats in Indian warehouses at 2 a.m. on night-vision CCTV. Nobody has ever made one. So we need a few nights of real footage from two or three sites, and everything else is ready and waiting for it.</p>
+    <p>Until then the system runs deliberately over-eagerly: it flags anything that moves, so that the moment footage arrives there are plenty of examples to sort through and learn from.</p>
+
+    <div class="callout">
+      <p><strong>In one sentence:</strong> the difficult engineering is finished, and what remains is teaching &mdash; which needs footage from the client, not more code.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="col">
+  <p>Plain-language companion to the formal specification.<br>
+  Full technical detail: <a href="../architecture.html">architecture.html</a> &middot;
+  Shorter overview: <a href="how-it-works.html">how-it-works.html</a> &middot;
+  What we need from the client: <a href="footage-request.md">footage-request.md</a></p>
+</footer>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+  var map = {};
+  links.forEach(function(a){
+    var el = document.querySelector(a.getAttribute('href'));
+    if (el) map[el.id] = a;
+  });
+  var sections = Object.keys(map).map(function(id){ return document.getElementById(id); });
+  if (!('IntersectionObserver' in window) || !sections.length) return;
+  var visible = {};
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ visible[e.target.id] = e.isIntersecting; });
+    var current = null;
+    for (var i = 0; i < sections.length; i++){
+      if (visible[sections[i].id]) { current = sections[i].id; break; }
+    }
+    if (!current) return;
+    links.forEach(function(a){ a.classList.remove('on'); });
+    map[current].classList.add('on');
+  }, { rootMargin: '-8% 0px -72% 0px', threshold: 0 });
+  sections.forEach(function(s){ io.observe(s); });
+})();
+</script>

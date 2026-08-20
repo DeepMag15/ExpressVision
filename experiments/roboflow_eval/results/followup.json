@@ -1,0 +1,238 @@
+{
+  "sweeps": [
+    {
+      "subject": "rat",
+      "fraction": 0.45,
+      "subject_px": 576,
+      "conf": 0.8551,
+      "hit": true,
+      "latency_ms": 3616.2,
+      "error": null
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.3,
+      "subject_px": 384,
+      "conf": 0.8862,
+      "hit": true,
+      "latency_ms": 885.1,
+      "error": null
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.2,
+      "subject_px": 256,
+      "conf": 0.7482,
+      "hit": true,
+      "latency_ms": 833.9,
+      "error": null
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.14,
+      "subject_px": 179,
+      "conf": 0.0726,
+      "hit": true,
+      "latency_ms": 617.8,
+      "error": null
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.1,
+      "subject_px": 128,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 850.5,
+      "error": null
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.07,
+      "subject_px": 89,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 607.3,
+      "error": null
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.05,
+      "subject_px": 64,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 2042.6,
+      "error": null
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.035,
+      "subject_px": 44,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 604.5,
+      "error": null
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.02,
+      "subject_px": 25,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 641.3,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.45,
+      "subject_px": 576,
+      "conf": 0.892,
+      "hit": true,
+      "latency_ms": 618.3,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.3,
+      "subject_px": 384,
+      "conf": 0.9072,
+      "hit": true,
+      "latency_ms": 2118.1,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.2,
+      "subject_px": 256,
+      "conf": 0.8929,
+      "hit": true,
+      "latency_ms": 627.3,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.14,
+      "subject_px": 179,
+      "conf": 0.8255,
+      "hit": true,
+      "latency_ms": 615.3,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.1,
+      "subject_px": 128,
+      "conf": 0.5704,
+      "hit": true,
+      "latency_ms": 609.0,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.07,
+      "subject_px": 89,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 723.9,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.05,
+      "subject_px": 64,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 621.7,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.035,
+      "subject_px": 44,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 625.0,
+      "error": null
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.02,
+      "subject_px": 25,
+      "conf": 0.0,
+      "hit": false,
+      "latency_ms": 609.5,
+      "error": null
+    }
+  ],
+  "rescues": [
+    {
+      "subject": "rat",
+      "fraction": 0.1,
+      "whole_conf": 0.0,
+      "tile_conf": 0.0,
+      "verdict": "both miss"
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.07,
+      "whole_conf": 0.0,
+      "tile_conf": 0.0,
+      "verdict": "both miss"
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.05,
+      "whole_conf": 0.0,
+      "tile_conf": 0.0,
+      "verdict": "both miss"
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.035,
+      "whole_conf": 0.0,
+      "tile_conf": 0.0,
+      "verdict": "both miss"
+    },
+    {
+      "subject": "rat",
+      "fraction": 0.02,
+      "whole_conf": 0.0,
+      "tile_conf": 0.0,
+      "verdict": "both miss"
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.1,
+      "whole_conf": 0.5704,
+      "tile_conf": 0.803,
+      "verdict": "both hit"
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.07,
+      "whole_conf": 0.0,
+      "tile_conf": 0.4662,
+      "verdict": "RESCUED"
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.05,
+      "whole_conf": 0.0,
+      "tile_conf": 0.0,
+      "verdict": "both miss"
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.035,
+      "whole_conf": 0.0,
+      "tile_conf": 0.0,
+      "verdict": "both miss"
+    },
+    {
+      "subject": "mouse",
+      "fraction": 0.02,
+      "whole_conf": 0.0,
+      "tile_conf": 0.0,
+      "verdict": "both miss"
+    }
+  ]
+}
