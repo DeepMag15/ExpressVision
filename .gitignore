@@ -6,6 +6,12 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# Console front end — build output and dependencies are reproducible from
+# package-lock.json, which IS committed.
+web/node_modules/
+web/dist/
+npm-debug.log*
+
 # Data — never commit footage, clips or databases
 data/
 out/

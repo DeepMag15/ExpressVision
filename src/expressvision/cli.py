@@ -6,6 +6,8 @@
     exv stats                     what is in the store
     exv review                    list events awaiting an operator verdict
     exv verdict <id> <verdict>    record a verdict
+    exv serve                     run the operator console
+    exv seed-demo                 build a labelled synthetic store to demo with
     exv init-config               write a starter cameras.yaml
 """
 
@@ -790,6 +792,167 @@ def export_coco_cmd(
         "\n[yellow]These are pre-annotations, not ground truth.[/] The boxes come from "
         "motion ROIs\nor MegaDetector proposals — a human corrects them in CVAT or "
         "Label Studio."
+    )
+
+
+@app.command()
+def serve(
+    db: Annotated[Path, typer.Option(help="SQLite store path")] = Path("out/expressvision.db"),
+    media_root: Annotated[
+        Path | None,
+        typer.Option(help="Confine clip/keyframe serving to this directory (default: db's dir)"),
+    ] = None,
+    host: Annotated[str, typer.Option(help="Bind address")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(help="Port")] = 8000,
+    dev: Annotated[
+        bool, typer.Option("--dev", help="Allow the Vite dev server origin (CORS)")
+    ] = False,
+    reload: Annotated[bool, typer.Option("--reload", help="Auto-reload on code changes")] = False,
+) -> None:
+    """Run the operator console — event feed, verdicts, pipeline health.
+
+    Binds to localhost by default. There is no authentication yet, so exposing
+    this on 0.0.0.0 would publish evidence clips to the whole network; that has
+    to wait for the RBAC and view-auditing the architecture specifies in §10.
+    """
+    try:
+        import uvicorn
+
+        from .api import create_app
+    except ImportError as exc:
+        console.print(
+            "[red]The console needs FastAPI and uvicorn.[/]\n"
+            "Install them with: [bold]uv pip install -e \".[web]\"[/]"
+        )
+        raise typer.Exit(1) from exc
+
+    static_dir = Path(__file__).resolve().parents[2] / "web" / "dist"
+    built = (static_dir / "index.html").exists()
+
+    if not db.exists():
+        console.print(
+            f"[yellow]No store at {db}.[/] The API will run and say so.\n"
+            f"Collect some events with [bold]exv run data/fixture.mp4[/], or build a "
+            f"demo store with [bold]exv seed-demo[/].\n"
+        )
+    else:
+        with Store(db) as store:
+            counts = store.counts()
+            if store.is_demo:
+                console.print(
+                    "[bold yellow]This store is synthetic demo data.[/] "
+                    "Every view will be bannered as such.\n"
+                )
+        console.print(
+            f"store: [bold]{db}[/] · {counts['events']:,} events, "
+            f"{counts['unverified']:,} awaiting a verdict\n"
+        )
+
+    url = f"http://{host}:{port}"
+    if built:
+        console.print(f"[green]Console[/]  {url}")
+    else:
+        console.print(
+            f"[green]API[/]      {url}/api/overview   ·   docs at {url}/docs\n"
+            f"[yellow]The console front end is not built.[/] Either:\n"
+            f"  build it once  — [bold]cd web && npm install && npm run build[/]\n"
+            f"  or develop it  — [bold]cd web && npm run dev[/] with "
+            f"[bold]exv serve --dev[/] running here"
+        )
+
+    if host not in {"127.0.0.1", "localhost", "::1"}:
+        console.print(
+            f"\n[red]Binding to {host} exposes evidence clips with no authentication.[/]"
+        )
+
+    if reload:
+        # Reload re-imports the app in a fresh process, so it needs a module
+        # path and the settings have to travel through the environment.
+        import os
+
+        os.environ["EXV_DB"] = str(db)
+        os.environ["EXV_DEV"] = "1" if dev else "0"
+        if media_root:
+            os.environ["EXV_MEDIA_ROOT"] = str(media_root)
+        if built:
+            os.environ["EXV_STATIC_DIR"] = str(static_dir)
+        uvicorn.run(
+            "expressvision.api.devserver:app",
+            host=host, port=port, reload=True, log_level="info",
+        )
+        return
+
+    uvicorn.run(
+        create_app(
+            db_path=db,
+            media_root=media_root,
+            static_dir=static_dir if built else None,
+            dev=dev,
+        ),
+        host=host,
+        port=port,
+        log_level="info",
+    )
+
+
+@app.command("seed-demo")
+def seed_demo_cmd(
+    db: Annotated[Path, typer.Option(help="Where to write the demo store")] = Path(
+        "out/demo.db"
+    ),
+    out_dir: Annotated[Path, typer.Option(help="Where demo keyframes go")] = Path("out/demo"),
+    nights: Annotated[int, typer.Option(help="Nights of history to generate")] = 14,
+    no_media: Annotated[
+        bool, typer.Option("--no-media", help="Skip rendering keyframes (much faster)")
+    ] = False,
+    seed: Annotated[int, typer.Option(help="RNG seed; the same seed rebuilds the same store")] = 41,
+    force: Annotated[
+        bool, typer.Option("--force", help="Overwrite an existing store at this path")
+    ] = False,
+) -> None:
+    """Build a synthetic store so the console can be demonstrated before footage.
+
+    Everything it writes is invented. The store is stamped as demo data, the API
+    reports the flag, the console banners every view, and each keyframe carries
+    the words burned into the picture — because a screenshot of pest activity
+    that is not visibly synthetic is a claim this system cannot yet support.
+    """
+    from .demo import CAMERAS, seed_demo
+
+    if db.exists():
+        if not force:
+            console.print(
+                f"[yellow]{db} already exists — not overwriting.[/] Pass --force to replace it."
+            )
+            raise typer.Exit(1)
+        with Store(db) as store:
+            if not store.is_demo:
+                console.print(
+                    f"[red]{db} holds real collected data, not a demo store.[/]\n"
+                    f"Refusing to overwrite it even with --force. Choose another path."
+                )
+                raise typer.Exit(1)
+        db.unlink()
+        for suffix in ("-wal", "-shm"):
+            Path(str(db) + suffix).unlink(missing_ok=True)
+
+    with console.status(f"generating {nights} nights across {len(CAMERAS)} cameras…"):
+        written = seed_demo(
+            db_path=db, out_dir=out_dir, nights=nights,
+            write_keyframes=not no_media, seed=seed,
+        )
+
+    table = Table(title="Demo store", title_justify="left", header_style="bold")
+    table.add_column("Wrote")
+    table.add_column("Count", justify="right")
+    for key, value in written.items():
+        table.add_row(key, f"{value:,}")
+    console.print(table)
+
+    console.print(
+        f"\n[bold yellow]This is synthetic data.[/] No model was trained and no real "
+        f"footage exists yet.\nIt is stamped demo in the store, and the console says so "
+        f"on every screen.\n\nView it: [bold]exv serve --db {db} --media-root {out_dir}[/]"
     )
 
 

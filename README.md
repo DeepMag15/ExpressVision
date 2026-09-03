@@ -33,9 +33,10 @@ trained** — that waits on real footage.
 | F | Event assembly ([assembler.py](src/expressvision/assembler.py)) | clips, keyframes, hashes |
 | G | Cross-camera association | not started |
 | — | Store + verdict loop ([store.py](src/expressvision/store.py)) | CLI + HTML review sheet |
+| — | Operator console ([api/](src/expressvision/api/), [web/](web/)) | event feed, verdicts, cascade, cameras, analytics |
 | — | Benchmark ([benchmark.py](src/expressvision/benchmark.py)) | ready, awaiting GPU |
 
-68 tests pass. `ruff` clean.
+114 tests pass. `ruff` clean.
 
 ---
 
@@ -178,6 +179,67 @@ box is several times faster than drawing each one cold.
 
 ---
 
+## The operator console
+
+A web console over the same store: the review queue with verdicts, the measured
+cascade, per-camera health and the analytics the event schema supports.
+
+```bash
+uv pip install -e ".[web]"          # FastAPI + uvicorn, optional
+cd web && npm install && npm run build && cd ..
+uv run exv serve                     # http://127.0.0.1:8000
+```
+
+The back end runs without the front end — `exv serve` will say so and still
+serve the API at `/api/...`, with generated docs at `/docs`. For front-end work,
+run the two separately so Vite can hot-reload:
+
+```bash
+uv run exv serve --dev --reload      # terminal 1: API on :8000
+cd web && npm run dev                # terminal 2: console on :5173, proxying /api
+```
+
+**It binds to localhost and has no authentication.** Exposing it on `0.0.0.0`
+would publish evidence clips to the whole network; that has to wait for the RBAC
+and view-auditing in §10 of the architecture.
+
+### The console before there is footage
+
+The store the collector has produced so far holds a handful of fixture events,
+which is not enough to judge a layout against — let alone show anyone.
+
+```bash
+uv run exv seed-demo                                    # writes out/demo.db
+uv run exv serve --db out/demo.db --media-root out/demo
+```
+
+**Everything it generates is invented**, and it is built so that no screenshot
+can be mistaken for a result: the store is stamped `demo`, the API reports the
+flag, the console carries an undismissable banner on every view, each keyframe
+has *SYNTHETIC DEMO FRAME* burned into the picture, and every event's
+`model_version` reads `SYNTHETIC — no model was trained`. `seed-demo` refuses to
+overwrite a store that holds real collected data, even with `--force`.
+
+It seeds two deliberate defects, because a demo showing only the happy path
+teaches the wrong thing: one camera goes offline for three nights, and another's
+lens fouls part way through. Both produce *quiet*, and the console has to
+distinguish quiet-because-nothing-happened from quiet-because-nobody-was-looking.
+
+### Uptime normalisation
+
+Every rate the console shows is divided by observed camera-hours, which the
+`run` table now records as `observed_seconds`. Where a run predates that column
+or is still in flight, coverage is reported incomplete and the affected rates
+read **unknown** — never `0`. That distinction is the point: a camera offline
+for three nights produces zero events, and an un-normalised dashboard renders
+that as *zero pest activity*, which is the most dangerous output this system can
+produce.
+
+Stores written before this change keep working; the missing column is added on
+open and reads as unknown coverage until those cameras run again.
+
+---
+
 ## Benchmarking
 
 ```bash
@@ -260,6 +322,8 @@ sites also spike at shift changes. Re-measure on real footage when it arrives.
 ```bash
 uv run pytest -q                          # everything
 uv run pytest tests/test_regression.py -q # end-to-end behaviour only
+uv run pytest tests/test_api.py -q        # console API, fast
+cd web && npm run typecheck               # console front end
 ```
 
 - `test_pipeline.py` — unit tests for each stage
@@ -269,6 +333,11 @@ uv run pytest tests/test_regression.py -q # end-to-end behaviour only
   are made against the fixture's own plan, so changing the fixture cannot
   silently weaken them.
 - `test_review.py` — review sheet, verdict import, COCO export, GPU probing
+- `test_api.py` — console API. Three groups carry weight: that a rate with no
+  denominator comes back `null` rather than `0`, that a database row cannot make
+  the server read a file outside the media root, and that a verdict reported as
+  saved actually reached the store. Skipped automatically when the `web` extra
+  is not installed.
 
 ---
 

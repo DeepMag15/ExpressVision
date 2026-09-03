@@ -21,7 +21,11 @@ dependencies = [
 exv = "expressvision.cli:app"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3", "ruff>=0.7"]
+dev = ["pytest>=8.3", "ruff>=0.7", "httpx>=0.27"]
+# Operator console. Optional so the collector, the CLI and the tests all run on
+# an edge node that only needs to collect — the console is a surface on top of
+# the store, never a dependency of producing one.
+web = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
 # Third-party model evaluation only. Used by experiments/roboflow_eval/, which
 # nothing in src/expressvision imports. Not a production dependency: the hosted
 # API needs the internet, sends client footage to a third party, and costs a
@@ -49,6 +53,15 @@ ml = [
     # setuptools 81 removed pkg_resources; the vendored yolov5 still imports it.
     "setuptools<81",
 ]
+
+[tool.uv]
+# `experimental` and `ml` cannot coexist: PytorchWildlife pins supervision
+# ==0.23.0 and inference-sdk requires >=0.26. Declaring the conflict lets uv
+# lock each extra separately instead of failing to resolve the whole project.
+# They are never needed together anyway — one is the MegaDetector bootstrap,
+# the other is the Roboflow evaluation in experiments/, and nothing in src/
+# imports either.
+conflicts = [[{ extra = "experimental" }, { extra = "ml" }]]
 
 [build-system]
 requires = ["hatchling"]
