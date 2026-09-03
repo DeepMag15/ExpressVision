@@ -30,3 +30,10 @@ secrets.*
 # OS
 Thumbs.db
 desktop.ini
+
+# company answers
+company_ans.txt
+
+# local changes
+CHANGES.md
+CONTEXT.md
