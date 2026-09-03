@@ -10,6 +10,11 @@ things here are worth defending:
 * **Events carry a verdict column from day one.** That is the return path in the
   architecture — the operator's Confirm / Reject / Reclassify is the training
   pipeline, so the column exists before the review UI does.
+* **Runs record how long they actually observed.** Every rate the dashboard
+  shows is divided by observed camera-hours, and a store that does not carry the
+  denominator can only show raw counts. Raw counts are how these systems lie: a
+  camera offline for three nights produces zero events, which an un-normalised
+  view renders as *zero pest activity*. ``observed_seconds`` is that denominator.
 """
 
 from __future__ import annotations
@@ -24,13 +29,20 @@ from .assembler import Event
 from .types import FunnelStats
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS meta (
+    key   TEXT PRIMARY KEY,
+    value TEXT
+);
+
 CREATE TABLE IF NOT EXISTS run (
     id           TEXT PRIMARY KEY,
     started_at   TEXT NOT NULL,
     finished_at  TEXT,
     camera_id    TEXT NOT NULL,
     source       TEXT NOT NULL,
-    config_json  TEXT
+    config_json  TEXT,
+    fps              REAL,   -- effective rate after frame_stride
+    observed_seconds REAL    -- stream time actually watched; the rate denominator
 );
 
 CREATE TABLE IF NOT EXISTS event (
@@ -85,14 +97,59 @@ CREATE INDEX IF NOT EXISTS idx_rejection_reason  ON rejection(reason);
 
 
 class Store:
-    def __init__(self, path: str | Path) -> None:
+    def __init__(self, path: str | Path, check_same_thread: bool = True) -> None:
+        """Open (or create) a store.
+
+        ``check_same_thread=False`` is for the API, where a request's connection
+        is created on one threadpool worker and used on another. That is safe
+        here because the connection belongs to a single request and is never
+        touched by two threads at once — FastAPI completes dependency setup
+        before the endpoint runs and teardown after it returns. It is *not* safe
+        to share one Store across concurrent requests, which is why the API
+        opens a fresh one per request rather than caching it.
+        """
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(str(self.path))
+        self.conn = sqlite3.connect(str(self.path), check_same_thread=check_same_thread)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    def _migrate(self) -> None:
+        """Add columns that older stores predate.
+
+        Stores are written on edge nodes and read back weeks later, so a schema
+        change must not orphan a database that already holds a night of
+        evidence. Missing columns read as NULL, which the API reports as unknown
+        coverage rather than as zero — an important difference, since zero
+        coverage and unknown coverage justify very different conclusions.
+        """
+        have = {row["name"] for row in self.conn.execute("PRAGMA table_info(run)")}
+        for column, decl in (("fps", "REAL"), ("observed_seconds", "REAL")):
+            if column not in have:
+                self.conn.execute(f"ALTER TABLE run ADD COLUMN {column} {decl}")
+
+    def set_meta(self, key: str, value: str) -> None:
+        self.conn.execute(
+            "INSERT OR REPLACE INTO meta (key, value) VALUES (?,?)", (key, value)
+        )
+        self.conn.commit()
+
+    def get_meta(self, key: str) -> str | None:
+        row = self.conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+        return row["value"] if row else None
+
+    @property
+    def is_demo(self) -> bool:
+        """Whether this store holds synthesised data rather than real footage.
+
+        The dashboard reads this to banner every view. A screenshot of invented
+        pest activity that is not marked as invented becomes a claim about a
+        system that has never seen a real rat.
+        """
+        return self.get_meta("demo") == "1"
 
     def close(self) -> None:
         self.conn.close()
@@ -111,10 +168,22 @@ class Store:
         )
         self.conn.commit()
 
-    def finish_run(self, run_id: str) -> None:
+    def finish_run(
+        self,
+        run_id: str,
+        fps: float | None = None,
+        observed_seconds: float | None = None,
+    ) -> None:
+        """Close a run, recording how much footage it actually watched.
+
+        ``observed_seconds`` is stream time, not wall-clock: a run over a file
+        observed the length of the file however long the decode took, and a run
+        that lost an RTSP link for an hour observed an hour less than the clock
+        suggests. Rates are only honest against the former.
+        """
         self.conn.execute(
-            "UPDATE run SET finished_at = ? WHERE id = ?",
-            (datetime.now(UTC).isoformat(), run_id),
+            "UPDATE run SET finished_at = ?, fps = ?, observed_seconds = ? WHERE id = ?",
+            (datetime.now(UTC).isoformat(), fps, observed_seconds, run_id),
         )
         self.conn.commit()
 

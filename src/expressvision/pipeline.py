@@ -47,6 +47,10 @@ class CameraPipeline:
         self.run_id = run_id or uuid.uuid4().hex[:16]
         self.stats = FunnelStats()
         self.events: list[Event] = []
+        # Effective frame rate after frame_stride, known once the first frame
+        # reveals the source's real properties. Recorded on the run so every
+        # rate the dashboard computes has a denominator.
+        self.fps: float | None = None
 
         # Built on the first frame, once real dimensions are known.
         self.gate: MotionGate | None = None
@@ -94,6 +98,7 @@ class CameraPipeline:
         h, w = frame.shape[:2]
         info = source.info
         fps = (info.fps if info else 15.0) / max(1, self.camera.frame_stride)
+        self.fps = fps
 
         self.gate = MotionGate(self.cfg.gate, w, h)
         self.tiler = Tiler(self.cfg.tile, w, h)
@@ -201,4 +206,7 @@ class CameraPipeline:
 
         if self.store:
             self.store.add_funnel(self.run_id, self.camera.id, self.stats)
-            self.store.finish_run(self.run_id)
+            # Stream time watched, not wall-clock elapsed. A source that never
+            # yielded a frame observed nothing, which must read as no coverage
+            # rather than as a quiet night.
+            self.store.finish_run(self.run_id, fps=self.fps, observed_seconds=last_t_s)
