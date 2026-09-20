@@ -36,3 +36,16 @@ secrets.*
 # OS
 Thumbs.db
 desktop.ini
+
+# company answers
+company_ans.txt
+
+# local changes
+CHANGES.md
+CONTEXT.md
+
+# Fetched public training data — reproducible from `exv build-dataset`,
+# and far too large to track (metadata alone is 152 MB unpacked).
+data/lila/
+samples/
+scripts/

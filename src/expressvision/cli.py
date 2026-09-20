@@ -956,6 +956,169 @@ def seed_demo_cmd(
     )
 
 
+@app.command("build-dataset")
+def build_dataset_cmd(
+    out: Annotated[Path, typer.Argument(help="Directory to write the dataset into")],
+    work_dir: Annotated[
+        Path, typer.Option(help="Where metadata and fetched source images are cached")
+    ] = Path("data/lila"),
+    frames: Annotated[int, typer.Option(help="How many training frames to generate")] = 400,
+    sources: Annotated[
+        int, typer.Option(help="How many source images to fetch per class")
+    ] = 150,
+    classes: Annotated[
+        str, typer.Option(help="Comma-separated classes to include")
+    ] = "rodent,bird",
+    backgrounds_dir: Annotated[
+        Path | None,
+        typer.Option(help="Use your own overnight stills as backgrounds (strongly preferred)"),
+    ] = None,
+    night_only: Annotated[
+        bool, typer.Option("--night-only/--any-light", help="Keep only infrared night backgrounds")
+    ] = True,
+    seed: Annotated[int, typer.Option(help="RNG seed; same seed rebuilds the same set")] = 11,
+) -> None:
+    """Build a scale-corrected training set from public camera-trap imagery.
+
+    Replaces the client-footage dependency. Real rodents from the Channel
+    Islands corpus are rescaled from their native 108-506 px down to the 24-140
+    px range inherited CCTV actually delivers, then composited into night
+    backgrounds with ground-truth boxes that are exact by construction.
+    """
+    import cv2
+
+    from .dataset import lila
+    from .dataset.compose import (
+        ComposeConfig,
+        Composer,
+        is_night_ir,
+        size_histogram,
+        write_coco,
+    )
+
+    work_dir = Path(work_dir)
+    wanted = [c.strip() for c in classes.split(",") if c.strip()]
+
+    console.print(f"[dim]source: {lila.CITATION}[/]\n")
+
+    with console.status("resolving metadata (18 MB on first run)…"):
+        metadata = lila.download_metadata(work_dir)
+    with console.status("building index (slow once, cached after)…"):
+        index = lila.LilaIndex.build(metadata, cache=work_dir / "index.json")
+
+    table = Table(title="Available annotations", title_justify="left", header_style="bold")
+    table.add_column("Class")
+    table.add_column("Boxes", justify="right")
+    for name, count in index.summary().items():
+        table.add_row(name, f"{count:,}")
+    console.print(table)
+
+    cfg = ComposeConfig(seed=seed)
+
+    fetched: list = []
+    for name in wanted:
+        picks = index.select(
+            name, min_px=cfg.source_min_px, limit=sources, seed=seed
+        )
+        if not picks:
+            console.print(f"[yellow]no crops for {name!r} above {cfg.source_min_px}px[/]")
+            continue
+        with console.status(f"fetching {len(picks)} {name} sources…") as status:
+            def progress(i: int, total: int, ok: int, _n=name) -> None:
+                status.update(f"fetching {_n}: {i}/{total} ({ok} ok)")
+
+            got = list(lila.fetch_many(picks, work_dir / "images", progress))
+        console.print(f"  {name:8} {len(got):>4} source images")
+        if name == "human" and not got:
+            # Not a bug: LILA withholds frames containing people from the public
+            # download, so the annotations exist and the images 404.
+            console.print(
+                "    [yellow]Human images are withheld from the public download for "
+                "privacy.[/]\n"
+                "    [dim]Collect this class yourself — walk past your own IR camera. "
+                "It is the\n    easiest class to obtain and raises no privacy "
+                "question.[/]"
+            )
+        fetched.extend(got)
+
+    if not fetched:
+        console.print("[red]No source imagery could be fetched. Check connectivity.[/]")
+        raise typer.Exit(1)
+
+    # Backgrounds are the half of this problem public wildlife data cannot solve.
+    # A rodent looks like a rodent anywhere; a warehouse at night does not look
+    # like a hillside at noon. Self-collected backgrounds need no animal in them,
+    # so they are the cheapest real data this project can obtain.
+    if backgrounds_dir is not None:
+        bg_paths = sorted(
+            p for p in Path(backgrounds_dir).rglob("*")
+            if p.suffix.lower() in {".jpg", ".jpeg", ".png"}
+        )
+        if not bg_paths:
+            console.print(f"[red]No images found in {backgrounds_dir}.[/]")
+            raise typer.Exit(1)
+        console.print(
+            f"  {'local':8} {len(bg_paths):>4} backgrounds from {backgrounds_dir}\n"
+        )
+    else:
+        wanted_bg = max(60, frames // 3)
+        picks = index.backgrounds(limit=wanted_bg * 4, seed=seed)
+        with console.status("fetching backgrounds…") as status:
+            def bg_progress(i: int, total: int, ok: int) -> None:
+                status.update(f"fetching backgrounds: {i}/{total} ({ok} kept)")
+
+            bg_paths = []
+            for _, path in lila.fetch_many(picks, work_dir / "images", bg_progress):
+                img = cv2.imread(str(path))
+                if img is not None and (not night_only or is_night_ir(img)):
+                    bg_paths.append(path)
+                if len(bg_paths) >= wanted_bg:
+                    break
+
+        if not bg_paths:
+            console.print("[red]No usable backgrounds could be fetched.[/]")
+            raise typer.Exit(1)
+        label = "night IR" if night_only else "any"
+        console.print(f"  {'empty':8} {len(bg_paths):>4} backgrounds ({label})\n")
+
+        if night_only:
+            console.print(
+                "[yellow]Note:[/] these are outdoor wildland scenes. They give correct "
+                "night-IR\nstatistics but the wrong furniture. Point [bold]--backgrounds-dir[/] "
+                "at your own\novernight footage to close that gap — backgrounds need no "
+                "animal in them.\n"
+            )
+
+    composer = Composer(cfg)
+    samples: list[tuple[str, object]] = []
+    with console.status("compositing…") as status:
+        for i in range(frames):
+            bg = bg_paths[i % len(bg_paths)]
+            sample = composer.build(bg, fetched)
+            if sample is not None:
+                samples.append((f"exv_{i:06d}.jpg", sample))
+            if i % 25 == 0:
+                status.update(f"compositing {i}/{frames}")
+
+    stats = write_coco(samples, Path(out), wanted, lila.CITATION)
+
+    result = Table(title="Dataset written", title_justify="left", header_style="bold")
+    result.add_column("Metric")
+    result.add_column("Value", justify="right")
+    for key, value in stats.items():
+        result.add_row(key.replace("_", " "), f"{value:,}")
+    console.print(result)
+
+    sizes = [px for _, s in samples for px in s.target_px]
+    console.print("\n[bold]Target size distribution[/]")
+    console.print(size_histogram(sizes))
+    console.print(
+        f"\n[green]Wrote[/] {out}\n"
+        f"[dim]Boxes are ground truth, not pre-annotations — the compositor "
+        f"knows where it placed each animal.[/]"
+    )
+
+
 @app.command("init-config")
 def init_config(
     out: Annotated[Path, typer.Option(help="Where to write the config")] = Path("cameras.yaml"),
