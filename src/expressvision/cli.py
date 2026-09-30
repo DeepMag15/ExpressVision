@@ -1119,6 +1119,123 @@ def build_dataset_cmd(
     )
 
 
+@app.command("train")
+def train_cmd(
+    dataset: Annotated[Path, typer.Argument(help="Dataset directory from build-dataset")],
+    out: Annotated[Path, typer.Option(help="Where checkpoints and the report go")] = Path(
+        "out/model"
+    ),
+    epochs: Annotated[int, typer.Option(help="Training epochs")] = 30,
+    batch_size: Annotated[int, typer.Option(help="Images per step, per GPU")] = 8,
+    lr: Annotated[float, typer.Option(help="Peak learning rate")] = 1e-4,
+    image_size: Annotated[
+        int, typer.Option(help="Detector input size; 640 matches the stage-C tile")
+    ] = 640,
+    checkpoint: Annotated[
+        str, typer.Option(help="rtdetr-v2-r18 | rtdetr-v2-r50 | rtdetr-r18 | rtdetr-r50")
+    ] = "rtdetr-v2-r18",
+    workers: Annotated[int, typer.Option(help="Dataloader workers")] = 4,
+    no_amp: Annotated[bool, typer.Option("--no-amp", help="Disable mixed precision")] = False,
+) -> None:
+    """Fine-tune an Apache-2.0 detector on a scale-corrected dataset.
+
+    Never an Ultralytics model: that family is AGPL-3.0, and shipping it inside
+    software sold to clients triggers network copyleft. RT-DETR and the
+    transformers library serving it are both Apache-2.0.
+    """
+    try:
+        from .train.train import CHECKPOINTS, TrainConfig, train
+    except ImportError as exc:
+        console.print(f"[red]{exc}[/]")
+        raise typer.Exit(1) from exc
+
+    if checkpoint not in CHECKPOINTS and "/" not in checkpoint:
+        console.print(f"[red]Unknown checkpoint {checkpoint!r}.[/] Available:")
+        for name, repo in CHECKPOINTS.items():
+            console.print(f"  {name:16} {repo}")
+        raise typer.Exit(1)
+
+    from .train.data import CocoSet
+
+    coco = CocoSet.load(dataset)
+    profile = coco.size_profile()
+    if not profile:
+        console.print("[red]Dataset has no annotations.[/]")
+        raise typer.Exit(1)
+
+    table = Table(title="Dataset", title_justify="left", header_style="bold")
+    table.add_column("Property")
+    table.add_column("Value", justify="right")
+    table.add_row("frames", f"{len(coco):,}")
+    for name, count in coco.class_counts().items():
+        table.add_row(f"  {name}", f"{count:,}")
+    table.add_section()
+    for key in ("p5", "median", "p95"):
+        table.add_row(f"target px {key}", f"{profile[key]:.0f}")
+    table.add_row("at or below 40 px", f"{profile['frac_at_or_below_40px']:.1%}")
+    console.print(table)
+
+    if profile["median"] > 120:
+        console.print(
+            "\n[yellow]Median target size is above 120 px.[/] That is drifting back "
+            "toward the\nsource corpus bias this pipeline exists to correct — the "
+            "model will be\ntrained on a regime the cameras do not deliver."
+        )
+
+    cfg = TrainConfig(
+        epochs=epochs, batch_size=batch_size, lr=lr, image_size=image_size,
+        checkpoint=checkpoint, num_workers=workers, amp=not no_amp,
+    )
+    console.print(f"\n[bold]{checkpoint}[/] · {epochs} epochs · batch {batch_size}\n")
+
+    with console.status("training…") as status:
+        def on_epoch(entry: dict) -> None:
+            status.update(f"epoch {entry['epoch']}/{epochs} · loss {entry['loss']:.4f}")
+            console.print(f"  epoch {entry['epoch']:>3}  loss {entry['loss']:.4f}")
+
+        train(dataset, out, cfg, on_epoch=on_epoch)
+
+    console.print("\n" + (Path(out) / "report.txt").read_text(encoding="utf-8"))
+    console.print(f"\n[green]Wrote[/] {out}")
+
+
+@app.command("evaluate")
+def evaluate_cmd(
+    model_dir: Annotated[Path, typer.Argument(help="Directory holding the checkpoint")],
+    dataset: Annotated[Path, typer.Argument(help="Dataset to evaluate against")],
+    score: Annotated[float, typer.Option(help="Confidence threshold")] = 0.35,
+    min_recall: Annotated[
+        float, typer.Option(help="Recall required for a band to count as usable")
+    ] = 0.85,
+) -> None:
+    """Report recall by target pixel size — the metric that decides deployment.
+
+    Not mAP. mAP averages over object sizes and hides the only question that
+    matters here: does the detector work at the size inherited CCTV delivers?
+    """
+    try:
+        from .train.data import CocoSet
+        from .train.evaluate import report
+        from .train.train import _require, predict_and_evaluate
+    except ImportError as exc:
+        console.print(f"[red]{exc}[/]")
+        raise typer.Exit(1) from exc
+
+    torch = _require("torch")
+    transformers = _require("transformers")
+
+    checkpoint = model_dir / "checkpoint" if (model_dir / "checkpoint").exists() else model_dir
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    processor = transformers.AutoImageProcessor.from_pretrained(checkpoint)
+    model = transformers.AutoModelForObjectDetection.from_pretrained(checkpoint).to(device)
+
+    coco = CocoSet.load(dataset)
+    with console.status(f"evaluating {len(coco):,} frames on {device}…"):
+        result = predict_and_evaluate(model, processor, coco, device, score_threshold=score)
+
+    console.print(report(result, min_recall=min_recall))
+
+
 @app.command("init-config")
 def init_config(
     out: Annotated[Path, typer.Option(help="Where to write the config")] = Path("cameras.yaml"),
