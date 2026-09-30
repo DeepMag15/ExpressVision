@@ -48,4 +48,4 @@ CONTEXT.md
 # and far too large to track (metadata alone is 152 MB unpacked).
 data/lila/
 samples/
-scripts/
+scripts/*.py
