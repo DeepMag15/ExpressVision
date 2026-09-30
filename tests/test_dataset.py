@@ -37,7 +37,16 @@ from expressvision.dataset.compose import (
     to_night_grey,
     write_coco,
 )
-from expressvision.dataset.lila import BANNER_TOP_FRAC, Crop, LilaIndex
+from expressvision.dataset.lila import (
+    BANNER_TOP_FRAC,
+    ArchiveSource,
+    Crop,
+    DirectorySource,
+    LilaIndex,
+    NetworkSource,
+    fetch,
+    make_source,
+)
 
 
 # --------------------------------------------------------------------- lila
@@ -266,3 +275,72 @@ def test_write_coco_marks_boxes_as_ground_truth(tmp_path, fake_corpus):
         assert ann["attributes"]["ground_truth"] is True
         assert ann["attributes"]["target_long_axis_px"] > 0
     assert (tmp_path / "ds" / "images" / "f0.jpg").exists()
+
+
+# ------------------------------------------------------------ image sources
+def test_archive_source_reads_without_extracting(tmp_path):
+    """The 86 GB zip is random-access; extracting would cost another 86 GB."""
+    import zipfile
+
+    archive = tmp_path / "images.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("channel-islands-camera-traps/images/loc-a/000/001.jpg", b"JPEGBYTES")
+
+    source = ArchiveSource(archive)
+    assert source.open(_crop("rodent", 200, 100, "loc-a/000/001.jpg")) == b"JPEGBYTES"
+    assert source.open(_crop("rodent", 200, 100, "loc-a/000/999.jpg")) is None
+    assert "1 members" in source.describe()
+
+
+def test_archive_source_handles_a_flat_layout(tmp_path):
+    """Different unzip tools produce different nesting; both must resolve."""
+    import zipfile
+
+    archive = tmp_path / "flat.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("loc-b/000/002.jpg", b"DATA")
+
+    assert ArchiveSource(archive).open(_crop("rodent", 200, 100, "loc-b/000/002.jpg")) == b"DATA"
+
+
+def test_directory_source_finds_the_right_nesting(tmp_path):
+    root = tmp_path / "extracted"
+    (root / "images" / "loc-c" / "000").mkdir(parents=True)
+    (root / "images" / "loc-c" / "000" / "003.jpg").write_bytes(b"PIXELS")
+
+    source = DirectorySource(root)
+    assert source.open(_crop("rodent", 200, 100, "loc-c/000/003.jpg")) == b"PIXELS"
+    # The resolved prefix is reused, so later lookups do not re-probe.
+    assert source.prefix == "images"
+
+
+def test_make_source_prefers_local_data_over_the_network(tmp_path):
+    import zipfile
+
+    archive = tmp_path / "a.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("images/x.jpg", b"1")
+
+    assert isinstance(make_source(archive=archive), ArchiveSource)
+    assert isinstance(make_source(images_dir=tmp_path), DirectorySource)
+    assert isinstance(make_source(), NetworkSource)
+
+
+def test_fetch_uses_the_supplied_source_and_caches(tmp_path):
+    import zipfile
+
+    archive = tmp_path / "a.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("images/loc-d/000/004.jpg", b"CACHED")
+
+    crop = _crop("rodent", 200, 100, "loc-d/000/004.jpg")
+    cache = tmp_path / "cache"
+    path = fetch(crop, cache, source=ArchiveSource(archive))
+    assert path is not None and path.read_bytes() == b"CACHED"
+
+    # Second call must hit the cache, not the source.
+    class Exploding(ArchiveSource):
+        def open(self, crop):
+            raise AssertionError("should not re-read a cached frame")
+
+    assert fetch(crop, cache, source=Exploding(archive)) == path

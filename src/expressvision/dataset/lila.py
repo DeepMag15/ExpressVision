@@ -21,9 +21,16 @@ The bird class earns its place: the evaluated third-party detector called a
 pigeon a rodent at 0.729 confidence, and a corpus without birds cannot teach a
 model not to.
 
-The full image set is 86 GB. We never download it. The metadata is 18 MB, and
-individual images are addressable, so a run pulls only the few thousand frames a
-build actually needs.
+Images can come from any of three places, and :class:`ImageSource` picks one:
+
+* **Network** — the metadata is 18 MB and individual frames are addressable, so
+  a build pulls only the few thousand it needs rather than the 86 GB set. Needs
+  egress, which a shared research box often lacks.
+* **A local directory** — the archive already extracted.
+* **The archive itself** — read members straight out of the zip. A zip has a
+  central directory, so members are random-access; extracting first would cost
+  another 86 GB of quota to gain nothing. On a user account with a disk limit
+  this is usually the right choice.
 """
 
 from __future__ import annotations
@@ -224,11 +231,139 @@ class LilaIndex:
         return dict(sorted(counts.items(), key=lambda kv: -kv[1]))
 
 
-def fetch(crop: Crop, cache_dir: Path, timeout: float = 60.0) -> Path | None:
-    """Download one source image, or return it from cache.
+class ImageSource:
+    """Where source frames come from.
 
-    Returns None rather than raising on a network failure: a build pulling
-    thousands of images should degrade to a smaller dataset, not abort at 90%.
+    Three cases, because the right one depends on what the machine has:
+
+    * **Network** — fetch individually over HTTPS. Pulls only what a build needs
+      (a few thousand of 245,529 frames) but requires egress, which a shared
+      research box often lacks.
+    * **Directory** — the archive already extracted on disk.
+    * **Archive** — read members straight out of the 86 GB zip. A zip carries a
+      central directory, so individual members are random-access; extracting
+      first would cost another 86 GB of quota to gain nothing.
+
+    The archive case is the one worth having on a user account with a disk
+    quota, and it is why this abstraction exists at all.
+    """
+
+    def open(self, crop: Crop) -> bytes | None:
+        raise NotImplementedError
+
+    def describe(self) -> str:
+        raise NotImplementedError
+
+
+class NetworkSource(ImageSource):
+    def __init__(self, timeout: float = 60.0) -> None:
+        self.timeout = timeout
+
+    def open(self, crop: Crop) -> bytes | None:
+        try:
+            with urllib.request.urlopen(crop.url(), timeout=self.timeout) as response:
+                return response.read()
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+            return None
+
+    def describe(self) -> str:
+        return f"network ({IMAGE_BASE})"
+
+
+class DirectorySource(ImageSource):
+    """An extracted copy. Tolerant about how deeply it was unpacked.
+
+    The archive may unpack as ``images/loc-.../000/000.jpg`` or with the
+    dataset name prefixed, depending on the tool used, so the relative path is
+    tried against a few plausible roots rather than assuming one.
+    """
+
+    PREFIXES = (
+        "",
+        "images",
+        "channel-islands-camera-traps/images",
+        "channel-islands-camera-traps",
+    )
+
+    def __init__(self, root: Path) -> None:
+        self.root = Path(root)
+        self.prefix: str | None = None
+
+    def _resolve(self, crop: Crop) -> Path | None:
+        if self.prefix is not None:
+            candidate = self.root / self.prefix / crop.file_name
+            return candidate if candidate.exists() else None
+        for prefix in self.PREFIXES:
+            candidate = self.root / prefix / crop.file_name
+            if candidate.exists():
+                self.prefix = prefix       # every later lookup uses the same root
+                return candidate
+        return None
+
+    def open(self, crop: Crop) -> bytes | None:
+        path = self._resolve(crop)
+        if path is None:
+            return None
+        try:
+            return path.read_bytes()
+        except OSError:
+            return None
+
+    def describe(self) -> str:
+        return f"directory ({self.root})"
+
+
+class ArchiveSource(ImageSource):
+    """Read members directly from the downloaded zip, without extracting."""
+
+    def __init__(self, archive: Path) -> None:
+        self.archive = Path(archive)
+        self._zip = zipfile.ZipFile(self.archive)
+        # Map the metadata's relative path to the member name, whatever prefix
+        # the archive happens to use.
+        self._members: dict[str, str] = {}
+        for name in self._zip.namelist():
+            if name.endswith("/"):
+                continue
+            key = name.split("images/", 1)[-1] if "images/" in name else name
+            self._members[key] = name
+
+    def open(self, crop: Crop) -> bytes | None:
+        member = self._members.get(crop.file_name)
+        if member is None:
+            return None
+        try:
+            with self._zip.open(member) as handle:
+                return handle.read()
+        except (KeyError, OSError, zipfile.BadZipFile):
+            return None
+
+    def describe(self) -> str:
+        return f"archive ({self.archive.name}, {len(self._members):,} members)"
+
+
+def make_source(
+    images_dir: Path | None = None, archive: Path | None = None
+) -> ImageSource:
+    """Pick a source, preferring local data over the network."""
+    if archive:
+        return ArchiveSource(archive)
+    if images_dir:
+        return DirectorySource(images_dir)
+    return NetworkSource()
+
+
+def fetch(
+    crop: Crop,
+    cache_dir: Path,
+    timeout: float = 60.0,
+    source: ImageSource | None = None,
+) -> Path | None:
+    """Materialise one source image in the cache, or return it if already there.
+
+    Returns None rather than raising when a frame cannot be obtained: a build
+    pulling thousands of images should degrade to a smaller dataset, not abort
+    at 90%. Human frames are a routine case — they 404 by design.
     """
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -236,12 +371,7 @@ def fetch(crop: Crop, cache_dir: Path, timeout: float = 60.0) -> Path | None:
     if dest.exists() and dest.stat().st_size > 0:
         return dest
 
-    try:
-        with urllib.request.urlopen(crop.url(), timeout=timeout) as response:
-            data = response.read()
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
-        return None
-
+    data = (source or NetworkSource(timeout)).open(crop)
     if not data:
         return None
     dest.write_bytes(data)
@@ -252,11 +382,13 @@ def fetch_many(
     crops: list[Crop],
     cache_dir: Path,
     on_progress: Callable[[int, int, int], None] | None = None,
+    source: ImageSource | None = None,
 ) -> Iterator[tuple[Crop, Path]]:
-    """Yield (crop, path) for every image that downloaded successfully."""
+    """Yield (crop, path) for every image that could be obtained."""
+    source = source or NetworkSource()
     ok = 0
     for i, crop in enumerate(crops, 1):
-        path = fetch(crop, cache_dir)
+        path = fetch(crop, cache_dir, source=source)
         if path is not None:
             ok += 1
             yield crop, path

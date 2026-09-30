@@ -989,6 +989,14 @@ def build_dataset_cmd(
     classes: Annotated[
         str, typer.Option(help="Comma-separated classes to include")
     ] = "rodent,bird",
+    images_dir: Annotated[
+        Path | None,
+        typer.Option(help="Extracted Channel Islands images, instead of downloading"),
+    ] = None,
+    archive: Annotated[
+        Path | None,
+        typer.Option(help="Read straight out of the downloaded .zip without extracting"),
+    ] = None,
     backgrounds_dir: Annotated[
         Path | None,
         typer.Option(help="Use your own overnight stills as backgrounds (strongly preferred)"),
@@ -1019,7 +1027,13 @@ def build_dataset_cmd(
     work_dir = Path(work_dir)
     wanted = [c.strip() for c in classes.split(",") if c.strip()]
 
-    console.print(f"[dim]source: {lila.CITATION}[/]\n")
+    console.print(f"[dim]source: {lila.CITATION}[/]")
+    try:
+        source = lila.make_source(images_dir=images_dir, archive=archive)
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Could not open image source: {exc}[/]")
+        raise typer.Exit(1) from exc
+    console.print(f"[dim]images: {source.describe()}[/]\n")
 
     with console.status("resolving metadata (18 MB on first run)…"):
         metadata = lila.download_metadata(work_dir)
@@ -1047,7 +1061,7 @@ def build_dataset_cmd(
             def progress(i: int, total: int, ok: int, _n=name) -> None:
                 status.update(f"fetching {_n}: {i}/{total} ({ok} ok)")
 
-            got = list(lila.fetch_many(picks, work_dir / "images", progress))
+            got = list(lila.fetch_many(picks, work_dir / "images", progress, source))
         console.print(f"  {name:8} {len(got):>4} source images")
         if name == "human" and not got:
             # Not a bug: LILA withholds frames containing people from the public
@@ -1088,7 +1102,7 @@ def build_dataset_cmd(
                 status.update(f"fetching backgrounds: {i}/{total} ({ok} kept)")
 
             bg_paths = []
-            for _, path in lila.fetch_many(picks, work_dir / "images", bg_progress):
+            for _, path in lila.fetch_many(picks, work_dir / "images", bg_progress, source):
                 img = cv2.imread(str(path))
                 if img is not None and (not night_only or is_night_ir(img)):
                     bg_paths.append(path)
