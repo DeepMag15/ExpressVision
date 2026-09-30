@@ -575,6 +575,26 @@ def doctor() -> None:
         table.add_row(key, value)
     console.print(table)
 
+    if len(env.devices) > 1:
+        fleet = Table(title="Devices", title_justify="left", header_style="bold")
+        fleet.add_column("#", justify="right")
+        fleet.add_column("Name")
+        fleet.add_column("Cap", justify="right")
+        fleet.add_column("Free", justify="right")
+        fleet.add_column("Used", justify="right")
+        fleet.add_column("Util", justify="right")
+        fleet.add_column("State")
+        for device in env.devices:
+            free = f"{device.free_mb / 1000:.1f} GB" if device.free_mb else "—"
+            used = f"{device.used_mb / 1000:.1f} GB" if device.used_mb else "—"
+            util = f"{device.utilisation_pct:.0f}%" if device.utilisation_pct is not None else "—"
+            state = "[red]in use[/]" if device.is_busy else "[green]free[/]"
+            fleet.add_row(
+                str(device.index), device.name, device.capability,
+                free, used, util, state,
+            )
+        console.print(fleet)
+
     for note in env.notes:
         console.print(f"[yellow]note:[/] {note}")
     for problem in env.problems:

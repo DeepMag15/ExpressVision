@@ -332,3 +332,57 @@ def test_gpu_sampling_degrades_gracefully():
     allocated, peak = torch_vram_mb()
     assert allocated is None or allocated >= 0
     assert peak is None or peak >= 0
+
+
+# ---------------------------------------------------------- multi-GPU probe
+def test_device_busy_is_judged_on_memory_not_utilisation():
+    """A job between batches shows 0% but still holds its allocation.
+
+    Picking that GPU because it looked idle would collide the moment it resumes,
+    which is exactly the failure mode on a shared DGX with no scheduler.
+    """
+    from expressvision.gpu import DeviceInfo
+
+    paused = DeviceInfo(index=0, used_mb=23596, utilisation_pct=0.0)
+    assert paused.is_busy
+
+    idle = DeviceInfo(index=1, used_mb=4, utilisation_pct=0.0)
+    assert not idle.is_busy
+
+
+def test_bf16_requires_ampere():
+    """Volta and Turing do fp16 only; an A100 recipe copied here would fail."""
+    from expressvision.gpu import DeviceInfo
+
+    assert not DeviceInfo(index=0, capability="7.0").supports_bf16   # V100
+    assert not DeviceInfo(index=0, capability="7.5").supports_bf16   # T4
+    assert DeviceInfo(index=0, capability="8.0").supports_bf16       # A100
+    assert DeviceInfo(index=0, capability="9.0").supports_bf16       # H100
+
+
+def test_recommended_devices_skips_the_occupied_one():
+    from expressvision.gpu import DeviceInfo, EnvReport
+
+    report = EnvReport(
+        cuda_available=True,
+        device_count=4,
+        devices=[
+            DeviceInfo(index=0, used_mb=23596),
+            DeviceInfo(index=1, used_mb=4),
+            DeviceInfo(index=2, used_mb=4),
+            DeviceInfo(index=3, used_mb=4),
+        ],
+    )
+    assert report.recommended_devices() == "1,2,3"
+    assert len(report.free_devices()) == 3
+
+
+def test_no_recommendation_when_every_device_is_taken():
+    from expressvision.gpu import DeviceInfo, EnvReport
+
+    report = EnvReport(
+        cuda_available=True,
+        device_count=2,
+        devices=[DeviceInfo(index=i, used_mb=20000) for i in range(2)],
+    )
+    assert report.recommended_devices() is None

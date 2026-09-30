@@ -30,6 +30,51 @@ class GpuSnapshot:
 
 
 @dataclass
+class DeviceInfo:
+    """One GPU, including what is already running on it.
+
+    Free memory matters as much as total on a shared machine. A DGX Station has
+    four GPUs and no scheduler by default, so another user's job routinely
+    occupies one — and torch defaults to device 0 regardless. Without this, a
+    training run either fights for memory or OOMs on a box with three idle GPUs.
+    """
+
+    index: int
+    name: str = ""
+    capability: str = ""
+    total_mb: float | None = None
+    free_mb: float | None = None
+    used_mb: float | None = None
+    utilisation_pct: float | None = None
+
+    @property
+    def is_busy(self) -> bool:
+        """Occupied by someone else's work.
+
+        Judged on memory rather than utilisation: a job between batches shows
+        0% for an instant but still holds its allocation, and picking that GPU
+        would collide the moment it resumes.
+        """
+        if self.used_mb is None:
+            return False
+        return self.used_mb > 1024
+
+    @property
+    def supports_bf16(self) -> bool:
+        """bfloat16 needs Ampere (SM 8.0) or newer.
+
+        Volta and Turing do fp16 only. This is worth surfacing because a
+        training config copied from an A100 recipe will specify bf16 and fail,
+        or silently fall back to fp32 and run several times slower.
+        """
+        try:
+            major = int(self.capability.split(".")[0])
+        except (ValueError, IndexError):
+            return False
+        return major >= 8
+
+
+@dataclass
 class EnvReport:
     python: str = ""
     platform: str = ""
@@ -43,12 +88,21 @@ class EnvReport:
     driver_version: str | None = None
     nvml_available: bool = False
     cudnn_version: str | None = None
+    devices: list[DeviceInfo] = field(default_factory=list)
     problems: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
     @property
     def gpu_ready(self) -> bool:
         return self.cuda_available and self.device_count > 0
+
+    def free_devices(self) -> list[DeviceInfo]:
+        return [d for d in self.devices if not d.is_busy]
+
+    def recommended_devices(self) -> str | None:
+        """A CUDA_VISIBLE_DEVICES value that avoids other people's jobs."""
+        free = self.free_devices()
+        return ",".join(str(d.index) for d in free) if free else None
 
 
 def probe_environment() -> EnvReport:
@@ -94,6 +148,29 @@ def probe_environment() -> EnvReport:
             report.cudnn_version = str(torch.backends.cudnn.version())
         except Exception:                               # pragma: no cover
             pass
+        report.devices = _probe_devices(torch, report.device_count)
+
+        busy = [d for d in report.devices if d.is_busy]
+        if busy and len(busy) < len(report.devices):
+            names = ", ".join(str(d.index) for d in busy)
+            free = report.recommended_devices()
+            report.notes.append(
+                f"GPU {names} already in use by another process. torch defaults to "
+                f"device 0 regardless — pin the free ones:\n"
+                f"    export CUDA_VISIBLE_DEVICES={free}"
+            )
+        elif busy:
+            report.problems.append(
+                "Every GPU is already occupied. Training now will contend for "
+                "memory or fail to allocate."
+            )
+
+        if report.devices and not any(d.supports_bf16 for d in report.devices):
+            report.notes.append(
+                "These GPUs predate Ampere, so bfloat16 is unavailable — use fp16 "
+                "mixed precision. Flash-Attention 2 is unsupported here too; the "
+                "default attention path is correct."
+            )
     elif report.torch_cuda_build is not None:
         report.problems.append(
             "torch has CUDA support compiled in but reports no usable device. "
@@ -110,6 +187,60 @@ def probe_environment() -> EnvReport:
 
     _add_driver_info(report)
     return report
+
+
+def _probe_devices(torch, count: int) -> list[DeviceInfo]:
+    """Per-GPU properties and current occupancy.
+
+    torch reports capability and total memory; free memory comes from
+    ``mem_get_info``, which reflects the whole device rather than this process,
+    so another user's allocation shows up. nvidia-smi fills in utilisation and
+    covers the case where mem_get_info is unavailable.
+    """
+    devices: list[DeviceInfo] = []
+    for index in range(count):
+        info = DeviceInfo(index=index)
+        try:
+            props = torch.cuda.get_device_properties(index)
+            info.name = props.name
+            info.capability = f"{props.major}.{props.minor}"
+            info.total_mb = props.total_memory / 1e6
+        except Exception:                               # pragma: no cover
+            pass
+        try:
+            free, total = torch.cuda.mem_get_info(index)
+            info.free_mb = free / 1e6
+            info.total_mb = total / 1e6
+            info.used_mb = (total - free) / 1e6
+        except Exception:                               # pragma: no cover
+            pass
+        devices.append(info)
+
+    rows = _nvidia_smi(
+        ["--query-gpu=index,memory.used,memory.total,utilization.gpu",
+         "--format=csv,noheader,nounits"]
+    )
+    by_index = {d.index: d for d in devices}
+    for row in rows:
+        parts = [p.strip() for p in row.split(",")]
+        if len(parts) < 4:
+            continue
+        try:
+            index = int(parts[0])
+        except ValueError:
+            continue
+        device = by_index.get(index)
+        if device is None:
+            continue
+        try:
+            device.used_mb = float(parts[1])
+            device.total_mb = float(parts[2])
+            device.free_mb = device.total_mb - device.used_mb
+            device.utilisation_pct = float(parts[3])
+        except ValueError:                              # pragma: no cover
+            pass
+
+    return devices
 
 
 def _add_driver_info(report: EnvReport) -> None:
