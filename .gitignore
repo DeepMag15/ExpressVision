@@ -41,11 +41,20 @@ desktop.ini
 company_ans.txt
 
 # local changes
+ExpressVision (2) (1).pptx
 CHANGES.md
 CONTEXT.md
+ExpressVision-Review.pdf
+ExpressVision-Review.pptx
+SCRIPT.md
+Template Sem 7 Report (1).docx
 
 # Fetched public training data — reproducible from `exv build-dataset`,
 # and far too large to track (metadata alone is 152 MB unpacked).
 data/lila/
 samples/
 scripts/*.py
+
+paper
+report
+deck
